@@ -171,9 +171,9 @@
                                                 <Button Content="Downloaded"
                                                         IsEnabled="False"
                                                         Background="#666666"/>
-                                                <Button Content="Remove"
+                                                <Button Content="Delete"
                                                         Background="#d32f2f"
-                                                        Command="{Binding ((vm:MainViewModel)DataContext).RemoveRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        Command="{Binding ((vm:MainViewModel)DataContext).DeleteRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}"/>
                                             </StackPanel>
                                         </Panel>

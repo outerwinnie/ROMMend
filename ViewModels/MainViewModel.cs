@@ -372,7 +372,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RemoveRom(RomViewModel? rom)
+    private void DeleteRom(RomViewModel? rom)
     {
         if (rom == null) return;
 
@@ -383,12 +383,12 @@ public partial class MainViewModel : ViewModelBase
             {
                 File.Delete(filePath);
                 rom.IsDownloaded = false;
-                StatusMessage = $"Removed {rom.Name}";
+                StatusMessage = $"Deleted {rom.Name}";
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error removing ROM: {ex.Message}";
+            StatusMessage = $"Error deleting ROM: {ex.Message}";
         }
     }
 }
