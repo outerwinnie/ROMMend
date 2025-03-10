@@ -230,12 +230,20 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
+            DownloadProgress = 0;
             StatusMessage = "Loading ROMs...";
+            DownloadStatus = string.Empty;
             Roms.Clear();
             FilteredRoms.Clear();
             Platforms.Clear();
 
-            var roms = await _apiService.GetRomsAsync();
+            var progress = new Progress<(int percentage, string status)>(update =>
+            {
+                DownloadProgress = update.percentage;
+                DownloadStatus = update.status;
+            });
+
+            var roms = await _apiService.GetRomsAsync(progress);
             
             // Add "All Platforms" option
             Platforms.Add("All Platforms");
@@ -250,11 +258,20 @@ public partial class MainViewModel : ViewModelBase
             SortPlatforms();
             SelectedPlatform = "All Platforms";
 
-            foreach (var rom in roms)
+            // Load cover images with progress
+            if (roms.Count > 0)
             {
-                var romViewModel = new RomViewModel(rom, _cacheService);
-                await romViewModel.LoadCoverImageAsync(_apiService);
-                Roms.Add(romViewModel);
+                for (int i = 0; i < roms.Count; i++)
+                {
+                    var rom = roms[i];
+                    var percentage = (int)((i + 1) * 100.0 / roms.Count);
+                    DownloadProgress = percentage;
+                    DownloadStatus = $"Loading cover image ({i + 1}/{roms.Count}): {rom.Name}";
+
+                    var romViewModel = new RomViewModel(rom, _cacheService);
+                    await romViewModel.LoadCoverImageAsync(_apiService);
+                    Roms.Add(romViewModel);
+                }
             }
 
             FilterRoms();
@@ -267,6 +284,8 @@ public partial class MainViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            DownloadProgress = 0;
+            DownloadStatus = string.Empty;
         }
     }
 

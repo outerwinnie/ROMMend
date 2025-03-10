@@ -51,16 +51,32 @@ public class ApiService
         }
     }
 
-    public async Task<List<Rom>> GetRomsAsync()
+    public async Task<List<Rom>> GetRomsAsync(IProgress<(int percentage, string status)>? progress = null)
     {
         try
         {
+            progress?.Report((0, "Fetching ROM list..."));
             var response = await _httpClient.GetAsync($"https://{Host}/api/roms");
             if (!response.IsSuccessStatusCode) return new List<Rom>();
 
             var content = await response.Content.ReadAsStringAsync();
-            var roms = JsonSerializer.Deserialize<List<Rom>>(content);
-            return roms ?? new List<Rom>();
+            var roms = JsonSerializer.Deserialize<List<Rom>>(content) ?? new List<Rom>();
+
+            // Report progress for each ROM's details
+            if (roms.Count > 0 && progress != null)
+            {
+                for (int i = 0; i < roms.Count; i++)
+                {
+                    var rom = roms[i];
+                    var percentage = (int)((i + 1) * 100.0 / roms.Count);
+                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{roms.Count}): {rom.Name}"));
+                    
+                    // Add a small delay to show progress
+                    await Task.Delay(50);
+                }
+            }
+
+            return roms;
         }
         catch
         {
@@ -68,74 +84,50 @@ public class ApiService
         }
     }
 
-    public async Task<byte[]?> DownloadRomAsync(int romId, string fsName, IProgress<(int percentage, string status)> progress)
+    public async Task<byte[]?> DownloadRomAsync(int id, string fsName, IProgress<(int percentage, string status)>? progress = null)
     {
         try
         {
             using var response = await _httpClient.GetAsync(
-                $"https://{Host}/api/roms/{romId}/content/{fsName}",
+                $"https://{Host}/api/roms/{id}/content/{fsName}",
                 HttpCompletionOption.ResponseHeadersRead);
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"Server returned {response.StatusCode}");
+                return null;
             }
 
-            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-            var buffer = new byte[81920]; // Increased buffer size for better performance
+            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            var buffer = new byte[81920]; // 80KB buffer for better performance
+            var ms = new MemoryStream();
+            var stream = await response.Content.ReadAsStreamAsync();
             var totalBytesRead = 0L;
             var startTime = DateTime.Now;
 
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-            using var memoryStream = new MemoryStream();
-
-            int retryCount = 0;
-            const int maxRetries = 3;
-            const int retryDelayMs = 1000;
-
             while (true)
             {
-                try
+                var bytesRead = await stream.ReadAsync(buffer);
+                if (bytesRead == 0) break;
+
+                await ms.WriteAsync(buffer.AsMemory(0, bytesRead));
+                totalBytesRead += bytesRead;
+
+                if (totalBytes > 0 && progress != null)
                 {
-                    var bytesRead = await contentStream.ReadAsync(buffer);
-                    if (bytesRead == 0) break;
-
-                    await memoryStream.WriteAsync(buffer.AsMemory(0, bytesRead));
-                    totalBytesRead += bytesRead;
-
-                    if (totalBytes > 0)
-                    {
-                        var percentage = (int)((totalBytesRead * 100) / totalBytes);
-                        var elapsedTime = DateTime.Now - startTime;
-                        var speed = totalBytesRead / (1024.0 * 1024.0 * elapsedTime.TotalSeconds);
-                        var remainingBytes = totalBytes - totalBytesRead;
-                        var etaSeconds = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
-                        var eta = TimeSpan.FromSeconds(etaSeconds);
-                        
-                        var status = $"{percentage}% - {FormatSize(totalBytesRead)}/{FormatSize(totalBytes)} - {speed:F1} MB/s - ETA: {FormatTime(eta)}";
-                        
-                        progress.Report((percentage, status));
-                    }
-
-                    retryCount = 0; // Reset retry count on successful read
-                }
-                catch (IOException) when (retryCount < maxRetries)
-                {
-                    retryCount++;
-                    await Task.Delay(retryDelayMs * retryCount);
-                    progress.Report((
-                        (int)((totalBytesRead * 100) / totalBytes), 
-                        $"Connection error, retry attempt {retryCount}/{maxRetries}..."
-                    ));
-                    continue;
+                    var percentage = (int)((totalBytesRead * 100) / totalBytes);
+                    var elapsedTime = DateTime.Now - startTime;
+                    var speed = totalBytesRead / (1024.0 * 1024.0 * elapsedTime.TotalSeconds);
+                    var downloadedMB = totalBytesRead / (1024.0 * 1024.0);
+                    var totalMB = totalBytes / (1024.0 * 1024.0);
+                    
+                    progress.Report((percentage, $"Downloading {fsName}: {downloadedMB:F1} MB / {totalMB:F1} MB ({speed:F1} MB/s)"));
                 }
             }
 
-            return memoryStream.ToArray();
+            return ms.ToArray();
         }
-        catch (Exception ex)
+        catch
         {
-            progress.Report((0, $"Download failed: {ex.Message}"));
             return null;
         }
     }
