@@ -21,6 +21,7 @@ public partial class RomViewModel : ViewModelBase
     public string PlatformFsSlug => _rom.PlatformFsSlug;
     public string FsName => _rom.FsName;
     public string DisplayName => _rom.DisplayName;
+    public string Size => _rom.SizeInMB;
 
     public RomViewModel(Rom rom, CacheService cacheService)
     {
@@ -33,29 +34,22 @@ public partial class RomViewModel : ViewModelBase
         try
         {
             // Try to load from cache first
-            CoverImage = await _cacheService.LoadCoverImageAsync(_rom.Name);
+            CoverImage = await _cacheService.LoadCoverImageAsync(_rom.Id);
             if (CoverImage != null) return;
 
-            // If cache miss or error, load from API
-            if (string.IsNullOrEmpty(_rom.UrlCover)) return;
-
-            var coverUrl = _rom.UrlCover;
-            if (!coverUrl.StartsWith("http"))
+            // If not in cache and we have a URL, download and cache it
+            if (!string.IsNullOrEmpty(_rom.UrlCover))
             {
-                coverUrl = $"https://{apiService.Host}{coverUrl}";
-            }
-
-            var imageData = await apiService.DownloadImageAsync(coverUrl);
-            if (imageData != null)
-            {
-                using var stream = new MemoryStream(imageData);
-                CoverImage = new Bitmap(stream);
-                await _cacheService.SaveCoverImageAsync(_rom.Name, imageData);
+                var imageData = await apiService.DownloadImageAsync(_rom.UrlCover);
+                if (imageData != null)
+                {
+                    CoverImage = await _cacheService.SaveCoverImageAsync(_rom.Id, imageData);
+                }
             }
         }
         catch
         {
-            // Failed to load cover image
+            // Ignore image loading errors
         }
     }
 }

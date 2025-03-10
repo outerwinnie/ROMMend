@@ -19,5 +19,10 @@ public class Rom
     [JsonPropertyName("url_cover")]
     public string? UrlCover { get; set; }
 
+    [JsonPropertyName("fs_size_bytes")]
+    public long FsSizeBytes { get; set; }
+
     public string DisplayName => $"{Name} ({PlatformFsSlug})";
+
+    public string SizeInMB => $"{FsSizeBytes / (1024.0 * 1024.0):F1} MB";
 }

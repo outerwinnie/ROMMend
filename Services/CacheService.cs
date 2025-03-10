@@ -22,16 +22,26 @@ public class CacheService
         Directory.CreateDirectory(Path.Combine(CacheDirectory, CoverImagesDirectory));
     }
 
-    public async Task SaveCoverImageAsync(string romName, byte[] imageData)
+    public async Task<Bitmap?> SaveCoverImageAsync(int romId, byte[] imageData)
     {
-        var fileName = GetSafeFileName(romName) + ".png";
+        var fileName = $"{romId}.png";
         var filePath = Path.Combine(CacheDirectory, CoverImagesDirectory, fileName);
         await File.WriteAllBytesAsync(filePath, imageData);
+
+        try
+        {
+            using var stream = new MemoryStream(imageData);
+            return new Bitmap(stream);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
-    public async Task<Bitmap?> LoadCoverImageAsync(string romName)
+    public async Task<Bitmap?> LoadCoverImageAsync(int romId)
     {
-        var fileName = GetSafeFileName(romName) + ".png";
+        var fileName = $"{romId}.png";
         var filePath = Path.Combine(CacheDirectory, CoverImagesDirectory, fileName);
         
         if (!File.Exists(filePath)) return null;
@@ -45,12 +55,6 @@ public class CacheService
         {
             return null;
         }
-    }
-
-    private string GetSafeFileName(string fileName)
-    {
-        var invalidChars = Path.GetInvalidFileNameChars();
-        return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
     }
 
     public void ClearCache()

@@ -134,10 +134,14 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding DisplayName}" 
                                              FontSize="14"/>
-                                    <Button Content="Download"
-                                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).DownloadRomCommand}"
-                                            CommandParameter="{Binding}"
-                                            Margin="0,5,0,0"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+                                        <TextBlock Text="{Binding Size}"
+                                                 Foreground="#888888"
+                                                 VerticalAlignment="Center"/>
+                                        <Button Content="Download"
+                                                Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).DownloadRomCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
