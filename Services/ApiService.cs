@@ -111,9 +111,8 @@ public class ApiService
                         var remainingBytes = totalBytes - totalBytesRead;
                         var etaSeconds = speed > 0 ? remainingBytes / (speed * 1024 * 1024) : 0;
                         var eta = TimeSpan.FromSeconds(etaSeconds);
-                        var downloadedMB = totalBytesRead / (1024.0 * 1024.0);
-                        var totalMB = totalBytes / (1024.0 * 1024.0);
-                        var status = $"{percentage}% - {downloadedMB:F1}/{totalMB:F1} MB - {speed:F1} MB/s - ETA: {FormatTime(eta)}";
+                        
+                        var status = $"{percentage}% - {FormatSize(totalBytesRead)}/{FormatSize(totalBytes)} - {speed:F1} MB/s - ETA: {FormatTime(eta)}";
                         
                         progress.Report((percentage, status));
                     }
@@ -162,5 +161,18 @@ public class ApiService
         if (time.TotalMinutes >= 1)
             return $"{time.Minutes}m {time.Seconds}s";
         return $"{time.Seconds}s";
+    }
+
+    private string FormatSize(double bytes)
+    {
+        const double GB = 1024 * 1024 * 1024;
+        const double MB = 1024 * 1024;
+        
+        if (bytes >= GB)
+        {
+            return $"{bytes / GB:F2} GB";
+        }
+        
+        return $"{bytes / MB:F1} MB";
     }
 }

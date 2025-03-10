@@ -21,7 +21,7 @@ public partial class RomViewModel : ViewModelBase
     public string PlatformFsSlug => _rom.PlatformFsSlug;
     public string FsName => _rom.FsName;
     public string DisplayName => _rom.DisplayName;
-    public string Size => _rom.SizeInMB;
+    public string Size => _rom.Size;
 
     public RomViewModel(Rom rom, CacheService cacheService)
     {

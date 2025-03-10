@@ -24,5 +24,19 @@ public class Rom
 
     public string DisplayName => $"{Name} ({PlatformFsSlug})";
 
-    public string SizeInMB => $"{FsSizeBytes / (1024.0 * 1024.0):F1} MB";
+    public string Size
+    {
+        get
+        {
+            const double GB = 1024 * 1024 * 1024;
+            const double MB = 1024 * 1024;
+            
+            if (FsSizeBytes >= GB)
+            {
+                return $"{FsSizeBytes / GB:F2} GB";
+            }
+            
+            return $"{FsSizeBytes / MB:F1} MB";
+        }
+    }
 }
