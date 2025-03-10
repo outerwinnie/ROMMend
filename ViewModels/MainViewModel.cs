@@ -200,12 +200,22 @@ public partial class MainViewModel : ViewModelBase
         IsLoggedIn = false;
         Roms.Clear();
         FilteredRoms.Clear();
+        Platforms.Clear();
+        Platforms.Add("All Platforms");
+        SelectedPlatform = "All Platforms";
+        SearchQuery = string.Empty;
         StatusMessage = string.Empty;
-        _settings.ClearSettings();
-        _cacheService.ClearCache();
+        DownloadProgress = 0;
+        DownloadStatus = string.Empty;
+
+        // Clear credentials
         Username = string.Empty;
         Password = string.Empty;
         Host = string.Empty;
+
+        // Clear settings and cache
+        _settings.ClearSettings();
+        _cacheService.ClearCache();
     }
 
     private async Task LoadRomsAsync()
