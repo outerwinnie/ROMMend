@@ -16,6 +16,9 @@ public partial class RomViewModel : ViewModelBase
     [ObservableProperty]
     private Bitmap? _coverImage;
 
+    [ObservableProperty]
+    private bool _isDownloaded;
+
     public int Id => _rom.Id;
     public string Name => _rom.Name;
     public string PlatformFsSlug => _rom.PlatformFsSlug;
@@ -50,5 +53,11 @@ public partial class RomViewModel : ViewModelBase
         {
             // Ignore image loading errors
         }
+    }
+
+    public void CheckIfDownloaded(string downloadDirectory)
+    {
+        var filePath = Path.Combine(downloadDirectory, PlatformFsSlug.ToLower(), FsName);
+        IsDownloaded = File.Exists(filePath);
     }
 }

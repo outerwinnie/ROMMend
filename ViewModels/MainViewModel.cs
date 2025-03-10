@@ -9,6 +9,7 @@ using ROMMend.Models;
 using ROMMend.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using System.Threading;
 
 namespace ROMMend.ViewModels;
 
@@ -18,6 +19,7 @@ public partial class MainViewModel : ViewModelBase
     private ApiService? _apiService;
     private readonly CacheService _cacheService;
     private readonly IStorageProvider _storageProvider;
+    private CancellationTokenSource? _downloadCancellation;
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -60,6 +62,9 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _searchQuery = string.Empty;
+
+    [ObservableProperty]
+    private bool _isDownloading;
 
     partial void OnSelectedPlatformChanged(string? value)
     {
@@ -266,7 +271,7 @@ public partial class MainViewModel : ViewModelBase
                     var rom = roms[i];
                     var percentage = (int)((i + 1) * 100.0 / roms.Count);
                     DownloadProgress = percentage;
-                    DownloadStatus = $"Loading cover image ({i + 1}/{roms.Count}): {rom.Name}";
+                    DownloadStatus = $"Loading cover images ({i + 1}/{roms.Count})";
 
                     var romViewModel = new RomViewModel(rom, _cacheService);
                     await romViewModel.LoadCoverImageAsync(_apiService);
@@ -290,6 +295,13 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CancelDownload()
+    {
+        _downloadCancellation?.Cancel();
+        StatusMessage = "Download cancelled";
+    }
+
+    [RelayCommand]
     private async Task DownloadRomAsync(RomViewModel? rom)
     {
         if (_apiService == null || rom == null || IsLoading) return;
@@ -297,7 +309,10 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            
+            IsDownloading = true;
+            StatusMessage = string.Empty;
+            _downloadCancellation = new CancellationTokenSource();
+
             // Create platform subfolder
             var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
             Directory.CreateDirectory(platformDir);
@@ -313,50 +328,34 @@ public partial class MainViewModel : ViewModelBase
                 return;
             }
 
-            // Create temporary file path for downloading
-            var tempFilePath = Path.Combine(platformDir, $"{rom.FsName}.tmp");
-
             var progress = new Progress<(int percentage, string status)>(update =>
             {
                 DownloadProgress = update.percentage;
                 DownloadStatus = update.status;
             });
 
-            var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, progress);
+            var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, rom.Name, progress, _downloadCancellation.Token);
             if (data != null)
             {
-                // Write to temporary file first
-                await File.WriteAllBytesAsync(tempFilePath, data);
-                
-                // Move the temporary file to the final location
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
-                File.Move(tempFilePath, filePath);
-                
+                await File.WriteAllBytesAsync(filePath, data, _downloadCancellation.Token);
                 var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
                 StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
+                rom.IsDownloaded = true;
             }
             else
             {
                 StatusMessage = $"Failed to download {rom.Name}";
             }
         }
-        catch (IOException ex)
+        catch (OperationCanceledException)
         {
-            StatusMessage = $"File error: {ex.Message}";
-            
-            // Clean up temporary file if it exists
-            var tempFilePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug, $"{rom.FsName}.tmp");
+            StatusMessage = "Download cancelled";
+            // Clean up partial download if it exists
+            var tempFilePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug, rom.FsName);
             if (File.Exists(tempFilePath))
             {
                 File.Delete(tempFilePath);
             }
-        }
-        catch (UnauthorizedAccessException)
-        {
-            StatusMessage = "Access denied. Please check folder permissions.";
         }
         catch (Exception ex)
         {
@@ -365,8 +364,32 @@ public partial class MainViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            IsDownloading = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
+            _downloadCancellation?.Dispose();
+            _downloadCancellation = null;
+        }
+    }
+
+    [RelayCommand]
+    private void DeleteRom(RomViewModel? rom)
+    {
+        if (rom == null) return;
+
+        try
+        {
+            var filePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower(), rom.FsName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                rom.IsDownloaded = false;
+                StatusMessage = $"Deleted {rom.Name}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error deleting ROM: {ex.Message}";
         }
     }
 }
