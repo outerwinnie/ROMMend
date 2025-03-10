@@ -177,15 +177,15 @@ public partial class MainViewModel : ViewModelBase
             else
             {
                 StatusMessage = error;
-                _settings.ClearSettings();
-                _cacheService.ClearCache();
+                _apiService = null; // Reset API service to allow retry
+                IsLoggedIn = false;
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Login error: {ex.Message}";
-            _settings.ClearSettings();
-            _cacheService.ClearCache();
+            _apiService = null; // Reset API service to allow retry
+            IsLoggedIn = false;
         }
         finally
         {
@@ -198,12 +198,27 @@ public partial class MainViewModel : ViewModelBase
     {
         _apiService = null;
         IsLoggedIn = false;
+        IsLoading = false;
+        
+        // Clear all input fields
+        Username = string.Empty;
+        Password = string.Empty;
+        Host = string.Empty;
+        DownloadDirectory = string.Empty;
+        
+        // Clear ROM-related data
         Roms.Clear();
         FilteredRoms.Clear();
         Platforms.Clear();
         SelectedPlatform = null;
         SearchQuery = string.Empty;
+        
+        // Clear progress and status
+        DownloadProgress = 0;
+        DownloadStatus = string.Empty;
         StatusMessage = string.Empty;
+        
+        // Clear settings and cache
         _settings.ClearSettings();
         _cacheService.ClearCache();
     }
@@ -263,27 +278,70 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
+            
+            // Create platform subfolder
+            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug);
+            Directory.CreateDirectory(platformDir);
+
+            // Use the original filename
+            var filePath = Path.Combine(platformDir, rom.FsName);
+            
+            // Check if file already exists
+            if (File.Exists(filePath))
+            {
+                var fileInfo = new FileInfo(filePath);
+                StatusMessage = $"{rom.FsName} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
+                return;
+            }
+
+            // Create temporary file path for downloading
+            var tempFilePath = Path.Combine(platformDir, $"{rom.FsName}.tmp");
+
             var progress = new Progress<(int percentage, string status)>(update =>
             {
                 DownloadProgress = update.percentage;
                 DownloadStatus = update.status;
             });
 
-            var data = await _apiService.DownloadRomAsync(rom.Id, rom.Name, progress);
+            var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, progress);
             if (data != null)
             {
-                var filePath = Path.Combine(DownloadDirectory, $"{rom.Name}.rom");
-                await File.WriteAllBytesAsync(filePath, data);
-                StatusMessage = $"Successfully downloaded {rom.Name}";
+                // Write to temporary file first
+                await File.WriteAllBytesAsync(tempFilePath, data);
+                
+                // Move the temporary file to the final location
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+                File.Move(tempFilePath, filePath);
+                
+                var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
+                StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
             }
             else
             {
                 StatusMessage = $"Failed to download {rom.Name}";
             }
         }
+        catch (IOException ex)
+        {
+            StatusMessage = $"File error: {ex.Message}";
+            
+            // Clean up temporary file if it exists
+            var tempFilePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug, $"{rom.FsName}.tmp");
+            if (File.Exists(tempFilePath))
+            {
+                File.Delete(tempFilePath);
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "Access denied. Please check folder permissions.";
+        }
         catch (Exception ex)
         {
-            StatusMessage = $"Error downloading {rom.Name}: {ex.Message}";
+            StatusMessage = $"Error downloading ROM: {ex.Message}";
         }
         finally
         {

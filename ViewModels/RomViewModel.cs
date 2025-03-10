@@ -33,7 +33,6 @@ public partial class RomViewModel : ViewModelBase
     {
         try
         {
-            // Try to load from cache first
             CoverImage = await _cacheService.LoadCoverImageAsync(_rom.Id);
             if (CoverImage != null) return;
 

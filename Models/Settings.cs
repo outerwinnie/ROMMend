@@ -52,8 +52,10 @@ public class Settings
     public void ClearSettings()
     {
         _settings = GetDefaultSettings();
-        var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsFile, json);
+        if (File.Exists(SettingsFile))
+        {
+            File.Delete(SettingsFile);
+        }
     }
 
     private SettingsData GetDefaultSettings() => new();
