@@ -5,12 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ROMMend.Avalonia.Models;
-using ROMMend.Avalonia.Services;
+using ROMMend.Models;
+using ROMMend.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 
-namespace ROMMend.Avalonia.ViewModels;
+namespace ROMMend.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {

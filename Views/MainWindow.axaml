@@ -1,18 +1,15 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:ROMMend.Avalonia.ViewModels"
+        xmlns:vm="using:ROMMend.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-        x:Class="ROMMend.Avalonia.Views.MainWindow"
+        x:Class="ROMMend.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="ROMMend"
         TransparencyLevelHint="AcrylicBlur"
         Background="Transparent"
-        ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
-        ExtendClientAreaTitleBarHeightHint="-1"
         Width="1024" Height="768"
         MinWidth="800" MinHeight="600">
 
@@ -45,33 +42,6 @@
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="Foreground" Value="#2a82da"/>
         </Style>
-        <Style Selector="Button.titlebar">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Width" Value="45"/>
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="FontSize" Value="16"/>
-        </Style>
-        <Style Selector="Button.titlebar-action">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="FontSize" Value="14"/>
-        </Style>
-        <Style Selector="Button.titlebar:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#44FFFFFF"/>
-        </Style>
-        <Style Selector="Button.titlebar-action:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#44FFFFFF"/>
-        </Style>
-        <Style Selector="Button.titlebar:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#66FFFFFF"/>
-        </Style>
-        <Style Selector="Button.titlebar-action:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#66FFFFFF"/>
-        </Style>
         <Style Selector="ComboBox">
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="Foreground" Value="White"/>
@@ -93,45 +63,9 @@
             </ExperimentalAcrylicBorder.Material>
         </ExperimentalAcrylicBorder>
 
-        <Grid Margin="20" RowDefinitions="Auto,*">
-            <!-- Custom Title Bar -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,20">
-                <TextBlock Grid.Column="0" 
-                         Text="ROMMend"
-                         FontSize="20"
-                         FontWeight="Bold"
-                         VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1" 
-                          Orientation="Horizontal" 
-                          HorizontalAlignment="Right"
-                          Spacing="5">
-                    <Button Command="{Binding LogoutCommand}"
-                            Classes="titlebar-action"
-                            IsVisible="{Binding IsLoggedIn}"
-                            Margin="0,0,15,0">
-                        Logout
-                    </Button>
-                    <Button Classes="titlebar"
-                            HorizontalAlignment="Right"
-                            Click="MinimizeWindow">
-                        🗕
-                    </Button>
-                    <Button Classes="titlebar"
-                            HorizontalAlignment="Right"
-                            Click="MaximizeWindow">
-                        🗖
-                    </Button>
-                    <Button Classes="titlebar"
-                            HorizontalAlignment="Right"
-                            Click="CloseWindow"
-                            Foreground="#E81123">
-                        ✕
-                    </Button>
-                </StackPanel>
-            </Grid>
-
+        <Grid Margin="20" RowDefinitions="*">
             <!-- Login Form -->
-            <StackPanel Grid.Row="1" Spacing="15" IsVisible="{Binding !IsLoggedIn}">
+            <StackPanel Spacing="15" IsVisible="{Binding !IsLoggedIn}">
                 <TextBlock Text="ROMMend"
                          FontSize="24"
                          FontWeight="Bold"
@@ -160,7 +94,7 @@
             </StackPanel>
 
             <!-- Main Content -->
-            <Grid Grid.Row="1" IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto">
+            <Grid IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto">
                 <!-- Filters -->
                 <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,15">
                     <ComboBox Grid.Column="0"

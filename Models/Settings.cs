@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace ROMMend.Avalonia.Models;
+namespace ROMMend.Models;
 
 public class Settings
 {

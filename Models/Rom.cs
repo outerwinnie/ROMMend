@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ROMMend.Avalonia.Models;
+namespace ROMMend.Models;
 
 public class Rom
 {

@@ -1,4 +1,4 @@
-﻿namespace ROMMend.Avalonia.ViewModels;
+namespace ROMMend.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {

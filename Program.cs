@@ -1,7 +1,7 @@
-﻿using Avalonia;
+using Avalonia;
 using System;
 
-namespace ROMMend.Avalonia;
+namespace ROMMend;
 
 sealed class Program
 {

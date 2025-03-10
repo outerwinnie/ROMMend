@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
-namespace ROMMend.Avalonia.Views;
+namespace ROMMend.Views;
 
 public partial class MainWindow : Window
 {

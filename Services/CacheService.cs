@@ -4,9 +4,9 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
-using ROMMend.Avalonia.Models;
+using ROMMend.Models;
 
-namespace ROMMend.Avalonia.Services;
+namespace ROMMend.Services;
 
 public class CacheService
 {

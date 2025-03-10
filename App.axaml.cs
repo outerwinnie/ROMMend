@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using ROMMend.Avalonia.ViewModels;
-using ROMMend.Avalonia.Views;
+using ROMMend.ViewModels;
+using ROMMend.Views;
 
-namespace ROMMend.Avalonia;
+namespace ROMMend;
 
 public partial class App : Application
 {

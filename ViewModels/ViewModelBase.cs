@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ROMMend.Avalonia.ViewModels;
+namespace ROMMend.ViewModels;
 
 public class ViewModelBase : ObservableObject
 {

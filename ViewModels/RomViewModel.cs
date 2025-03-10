@@ -3,10 +3,10 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using ROMMend.Avalonia.Models;
-using ROMMend.Avalonia.Services;
+using ROMMend.Models;
+using ROMMend.Services;
 
-namespace ROMMend.Avalonia.ViewModels;
+namespace ROMMend.ViewModels;
 
 public partial class RomViewModel : ViewModelBase
 {

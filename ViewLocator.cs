@@ -1,9 +1,9 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using ROMMend.Avalonia.ViewModels;
+using ROMMend.ViewModels;
 
-namespace ROMMend.Avalonia;
+namespace ROMMend;
 
 public class ViewLocator : IDataTemplate
 {

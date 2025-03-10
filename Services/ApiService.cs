@@ -6,9 +6,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ROMMend.Avalonia.Models;
+using ROMMend.Models;
 
-namespace ROMMend.Avalonia.Services;
+namespace ROMMend.Services;
 
 public class ApiService
 {
