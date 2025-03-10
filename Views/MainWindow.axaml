@@ -160,9 +160,23 @@
                                         <TextBlock Text="{Binding Size}"
                                                  Foreground="#888888"
                                                  VerticalAlignment="Center"/>
-                                        <Button Content="Download"
-                                                Command="{Binding ((vm:MainViewModel)DataContext).DownloadRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}"/>
+                                        <Panel>
+                                            <Button Content="Download"
+                                                    Command="{Binding ((vm:MainViewModel)DataContext).DownloadRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    IsVisible="{Binding !IsDownloaded}"/>
+                                            <StackPanel Orientation="Horizontal" 
+                                                        Spacing="5" 
+                                                        IsVisible="{Binding IsDownloaded}">
+                                                <Button Content="Downloaded"
+                                                        IsEnabled="False"
+                                                        Background="#666666"/>
+                                                <Button Content="Remove"
+                                                        Background="#d32f2f"
+                                                        Command="{Binding ((vm:MainViewModel)DataContext).RemoveRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Panel>
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>

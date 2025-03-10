@@ -337,6 +337,7 @@ public partial class MainViewModel : ViewModelBase
                 
                 var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
                 StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
+                rom.IsDownloaded = true;
             }
             else
             {
@@ -367,6 +368,27 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveRom(RomViewModel? rom)
+    {
+        if (rom == null) return;
+
+        try
+        {
+            var filePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower(), rom.FsName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                rom.IsDownloaded = false;
+                StatusMessage = $"Removed {rom.Name}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error removing ROM: {ex.Message}";
         }
     }
 }
