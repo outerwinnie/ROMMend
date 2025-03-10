@@ -171,23 +171,29 @@
                 </ListBox>
 
                 <!-- Loading Overlay -->
-                <Panel IsVisible="{Binding IsLoading}"
-                       Background="#80000000">
-                    <StackPanel VerticalAlignment="Center" Spacing="10">
-                        <TextBlock Text="{Binding StatusMessage}"
-                                 HorizontalAlignment="Center"/>
+                <Border IsVisible="{Binding IsLoading}"
+                       Background="#1e1e1e"
+                       BorderBrush="#333333"
+                       BorderThickness="1"
+                       Padding="20"
+                       MaxWidth="400"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{Binding DownloadStatus}"
+                                 TextWrapping="Wrap"
+                                 TextAlignment="Center"/>
                         <ProgressBar Value="{Binding DownloadProgress}"
                                    Width="300"/>
-                        <TextBlock Text="{Binding DownloadStatus}"
-                                 HorizontalAlignment="Center"/>
                     </StackPanel>
-                </Panel>
+                </Border>
             </Grid>
 
             <!-- Status Bar -->
             <TextBlock Grid.Row="2" Grid.Column="1"
                      Text="{Binding StatusMessage}"
-                     HorizontalAlignment="Center"/>
+                     HorizontalAlignment="Center"
+                     IsVisible="{Binding !IsLoading}"/>
         </Grid>
     </Grid>
 </Window>

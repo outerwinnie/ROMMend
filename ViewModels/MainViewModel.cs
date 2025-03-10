@@ -231,8 +231,8 @@ public partial class MainViewModel : ViewModelBase
         {
             IsLoading = true;
             DownloadProgress = 0;
-            StatusMessage = "Loading ROMs...";
             DownloadStatus = string.Empty;
+            StatusMessage = string.Empty;
             Roms.Clear();
             FilteredRoms.Clear();
             Platforms.Clear();
