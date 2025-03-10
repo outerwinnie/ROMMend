@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ROMMend.Models;
+using System.Threading;
 
 namespace ROMMend.Services;
 
@@ -84,13 +85,16 @@ public class ApiService
         }
     }
 
-    public async Task<byte[]?> DownloadRomAsync(int id, string fsName, IProgress<(int percentage, string status)>? progress = null)
+    public async Task<byte[]?> DownloadRomAsync(int id, string fsName, string romName, 
+        IProgress<(int percentage, string status)>? progress = null, 
+        CancellationToken cancellationToken = default)
     {
         try
         {
             using var response = await _httpClient.GetAsync(
                 $"https://{Host}/api/roms/{id}/content/{fsName}",
-                HttpCompletionOption.ResponseHeadersRead);
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -98,18 +102,18 @@ public class ApiService
             }
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            var buffer = new byte[81920]; // 80KB buffer for better performance
+            var buffer = new byte[81920];
             var ms = new MemoryStream();
-            var stream = await response.Content.ReadAsStreamAsync();
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             var totalBytesRead = 0L;
             var startTime = DateTime.Now;
 
             while (true)
             {
-                var bytesRead = await stream.ReadAsync(buffer);
+                var bytesRead = await stream.ReadAsync(buffer, cancellationToken);
                 if (bytesRead == 0) break;
 
-                await ms.WriteAsync(buffer.AsMemory(0, bytesRead));
+                await ms.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
                 totalBytesRead += bytesRead;
 
                 if (totalBytes > 0 && progress != null)
@@ -120,11 +124,15 @@ public class ApiService
                     var downloadedMB = totalBytesRead / (1024.0 * 1024.0);
                     var totalMB = totalBytes / (1024.0 * 1024.0);
                     
-                    progress.Report((percentage, $"Downloading {fsName}: {downloadedMB:F1} MB / {totalMB:F1} MB ({speed:F1} MB/s)"));
+                    progress.Report((percentage, $"Downloading {romName}: {downloadedMB:F1} MB / {totalMB:F1} MB ({speed:F1} MB/s)"));
                 }
             }
 
             return ms.ToArray();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch
         {

@@ -208,6 +208,11 @@
                             Width="200"
                             Height="4"
                             IsVisible="{Binding DownloadStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <Button Content="Cancel"
+                        Command="{Binding CancelDownloadCommand}"
+                        Background="#d32f2f"
+                        Margin="0,10,0,0"
+                        IsVisible="{Binding IsDownloading}"/>
             </StackPanel>
         </Panel>
     </Panel>
