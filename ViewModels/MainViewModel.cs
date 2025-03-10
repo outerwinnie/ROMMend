@@ -269,7 +269,11 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
-            var filePath = Path.Combine(DownloadDirectory, rom.FsName);
+            // Create platform subfolder
+            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug);
+            Directory.CreateDirectory(platformDir);
+
+            var filePath = Path.Combine(platformDir, rom.FsName);
             if (File.Exists(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
@@ -283,7 +287,7 @@ public partial class MainViewModel : ViewModelBase
             DownloadStatus = "Starting download...";
 
             // Create a temporary file path for downloading
-            var tempFilePath = Path.Combine(DownloadDirectory, $"{rom.FsName}.tmp");
+            var tempFilePath = Path.Combine(platformDir, $"{rom.FsName}.tmp");
 
             var progress = new Progress<(int percentage, string status)>(update =>
             {
