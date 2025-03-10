@@ -259,17 +259,21 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
+            var filePath = Path.Combine(DownloadDirectory, rom.FsName);
+            if (File.Exists(filePath))
+            {
+                var fileInfo = new FileInfo(filePath);
+                StatusMessage = $"{rom.FsName} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
+                return;
+            }
+
             IsLoading = true;
             StatusMessage = $"Downloading {rom.Name}...";
             DownloadProgress = 0;
             DownloadStatus = "Starting download...";
 
-            var filePath = Path.Combine(DownloadDirectory, rom.FsName);
-            if (File.Exists(filePath))
-            {
-                StatusMessage = $"{rom.FsName} already exists.";
-                return;
-            }
+            // Create a temporary file path for downloading
+            var tempFilePath = Path.Combine(DownloadDirectory, $"{rom.FsName}.tmp");
 
             var progress = new Progress<(int percentage, string status)>(update =>
             {
@@ -280,13 +284,36 @@ public partial class MainViewModel : ViewModelBase
             var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, progress);
             if (data != null)
             {
-                await File.WriteAllBytesAsync(filePath, data);
-                StatusMessage = $"Downloaded {rom.Name} successfully!";
+                // Write to temporary file first
+                await File.WriteAllBytesAsync(tempFilePath, data);
+
+                // Move the temporary file to the final location
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+                File.Move(tempFilePath, filePath);
+
+                var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
+                StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
             }
             else
             {
                 StatusMessage = $"Failed to download {rom.Name}";
+                // Clean up temporary file if it exists
+                if (File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
             }
+        }
+        catch (IOException ex)
+        {
+            StatusMessage = $"File error: {ex.Message}";
+        }
+        catch (UnauthorizedAccessException)
+        {
+            StatusMessage = "Access denied. Please check folder permissions.";
         }
         catch (Exception ex)
         {
