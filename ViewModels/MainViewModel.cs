@@ -201,19 +201,9 @@ public partial class MainViewModel : ViewModelBase
         Roms.Clear();
         FilteredRoms.Clear();
         Platforms.Clear();
-        Platforms.Add("All Platforms");
-        SelectedPlatform = "All Platforms";
+        SelectedPlatform = null;
         SearchQuery = string.Empty;
         StatusMessage = string.Empty;
-        DownloadProgress = 0;
-        DownloadStatus = string.Empty;
-
-        // Clear credentials
-        Username = string.Empty;
-        Password = string.Empty;
-        Host = string.Empty;
-
-        // Clear settings and cache
         _settings.ClearSettings();
         _cacheService.ClearCache();
     }
@@ -229,32 +219,35 @@ public partial class MainViewModel : ViewModelBase
             Roms.Clear();
             FilteredRoms.Clear();
             Platforms.Clear();
-            Platforms.Add("All Platforms");
 
             var roms = await _apiService.GetRomsAsync();
+            
+            // Add "All Platforms" option
+            Platforms.Add("All Platforms");
+            
+            // Get unique platforms
+            var uniquePlatforms = roms.Select(r => r.PlatformFsSlug).Distinct();
+            foreach (var platform in uniquePlatforms)
+            {
+                Platforms.Add(platform);
+            }
+            
+            SortPlatforms();
+            SelectedPlatform = "All Platforms";
+
             foreach (var rom in roms)
             {
                 var romViewModel = new RomViewModel(rom, _cacheService);
                 await romViewModel.LoadCoverImageAsync(_apiService);
                 Roms.Add(romViewModel);
-                if (!Platforms.Contains(rom.PlatformFsSlug))
-                {
-                    Platforms.Add(rom.PlatformFsSlug);
-                }
             }
 
-            SortPlatforms();
-            StatusMessage = $"Loaded {roms.Count} ROMs";
-            SelectedPlatform = "All Platforms";
             FilterRoms();
+            StatusMessage = $"Loaded {Roms.Count} ROMs";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading ROMs: {ex.Message}";
-            Roms.Clear();
-            FilteredRoms.Clear();
-            Platforms.Clear();
-            Platforms.Add("All Platforms");
         }
         finally
         {
@@ -263,75 +256,34 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task DownloadRomAsync(RomViewModel rom)
+    private async Task DownloadRomAsync(RomViewModel? rom)
     {
-        if (_apiService == null || string.IsNullOrEmpty(DownloadDirectory)) return;
+        if (_apiService == null || rom == null || IsLoading) return;
 
         try
         {
-            // Create platform subfolder
-            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug);
-            Directory.CreateDirectory(platformDir);
-
-            var filePath = Path.Combine(platformDir, rom.FsName);
-            if (File.Exists(filePath))
-            {
-                var fileInfo = new FileInfo(filePath);
-                StatusMessage = $"{rom.FsName} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
-                return;
-            }
-
             IsLoading = true;
-            StatusMessage = $"Downloading {rom.Name}...";
-            DownloadProgress = 0;
-            DownloadStatus = "Starting download...";
-
-            // Create a temporary file path for downloading
-            var tempFilePath = Path.Combine(platformDir, $"{rom.FsName}.tmp");
-
             var progress = new Progress<(int percentage, string status)>(update =>
             {
                 DownloadProgress = update.percentage;
                 DownloadStatus = update.status;
             });
 
-            var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, progress);
+            var data = await _apiService.DownloadRomAsync(rom.Id, rom.Name, progress);
             if (data != null)
             {
-                // Write to temporary file first
-                await File.WriteAllBytesAsync(tempFilePath, data);
-
-                // Move the temporary file to the final location
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
-                File.Move(tempFilePath, filePath);
-
-                var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
-                StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
+                var filePath = Path.Combine(DownloadDirectory, $"{rom.Name}.rom");
+                await File.WriteAllBytesAsync(filePath, data);
+                StatusMessage = $"Successfully downloaded {rom.Name}";
             }
             else
             {
                 StatusMessage = $"Failed to download {rom.Name}";
-                // Clean up temporary file if it exists
-                if (File.Exists(tempFilePath))
-                {
-                    File.Delete(tempFilePath);
-                }
             }
-        }
-        catch (IOException ex)
-        {
-            StatusMessage = $"File error: {ex.Message}";
-        }
-        catch (UnauthorizedAccessException)
-        {
-            StatusMessage = "Access denied. Please check folder permissions.";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error downloading ROM: {ex.Message}";
+            StatusMessage = $"Error downloading {rom.Name}: {ex.Message}";
         }
         finally
         {
