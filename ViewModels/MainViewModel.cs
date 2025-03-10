@@ -299,7 +299,7 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = true;
             
             // Create platform subfolder
-            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug);
+            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
             Directory.CreateDirectory(platformDir);
 
             // Use the original filename
