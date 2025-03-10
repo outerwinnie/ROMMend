@@ -69,7 +69,7 @@ public class ApiService
                 {
                     var rom = roms[i];
                     var percentage = (int)((i + 1) * 100.0 / roms.Count);
-                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{roms.Count}): {rom.Name}"));
+                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{roms.Count})"));
                     
                     // Add a small delay to show progress
                     await Task.Delay(50);

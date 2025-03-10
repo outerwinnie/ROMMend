@@ -266,7 +266,7 @@ public partial class MainViewModel : ViewModelBase
                     var rom = roms[i];
                     var percentage = (int)((i + 1) * 100.0 / roms.Count);
                     DownloadProgress = percentage;
-                    DownloadStatus = $"Loading cover image ({i + 1}/{roms.Count}): {rom.Name}";
+                    DownloadStatus = $"Loading cover images ({i + 1}/{roms.Count})";
 
                     var romViewModel = new RomViewModel(rom, _cacheService);
                     await romViewModel.LoadCoverImageAsync(_apiService);

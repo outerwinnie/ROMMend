@@ -50,164 +50,165 @@
         </Style>
     </Window.Styles>
 
-    <Grid Margin="20" RowDefinitions="*">
-        <!-- Login Form -->
-        <StackPanel Spacing="15" IsVisible="{Binding !IsLoggedIn}">
-            <TextBlock Text="ROMMend"
-                     FontSize="24"
-                     FontWeight="Bold"
-                     HorizontalAlignment="Center"/>
+    <Panel>
+        <Grid Margin="20" RowDefinitions="*">
+            <!-- Login Form -->
+            <StackPanel Spacing="15" IsVisible="{Binding !IsLoggedIn}">
+                <TextBlock Text="ROMMend"
+                         FontSize="24"
+                         FontWeight="Bold"
+                         HorizontalAlignment="Center"/>
 
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="0,20">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Host:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Host}"/>
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="0,20">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Host:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Host}"/>
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Username:" VerticalAlignment="Center" Margin="0,10,10,0"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Username}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Username:" VerticalAlignment="Center" Margin="0,10,10,0"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Username}" Margin="0,10,0,0"/>
 
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Password:" VerticalAlignment="Center" Margin="0,10,10,0"/>
-                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Password}" PasswordChar="•" Margin="0,10,0,0"/>
-            </Grid>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Password:" VerticalAlignment="Center" Margin="0,10,10,0"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Password}" PasswordChar="•" Margin="0,10,0,0"/>
+                </Grid>
 
-            <TextBlock Text="{Binding StatusMessage}"
-                     Foreground="#ff4444"
-                     HorizontalAlignment="Center"
-                     IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <TextBlock Text="{Binding StatusMessage}"
+                         Foreground="#ff4444"
+                         HorizontalAlignment="Center"
+                         IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-                <Button Command="{Binding LoginCommand}"
-                        IsEnabled="{Binding !IsLoading}">
-                    Login
-                </Button>
-                <Button Command="{Binding SelectDownloadDirectoryCommand}">
-                    Select Download Directory
-                </Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                    <Button Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding !IsLoading}">
+                        Login
+                    </Button>
+                    <Button Command="{Binding SelectDownloadDirectoryCommand}">
+                        Select Download Directory
+                    </Button>
+                </StackPanel>
+
+                <ProgressBar Value="{Binding DownloadProgress}"
+                           IsVisible="{Binding IsLoading}"
+                           Margin="0,10,0,0"/>
+                
+                <TextBlock Text="{Binding DownloadStatus}"
+                         HorizontalAlignment="Center"
+                         IsVisible="{Binding IsLoading}"/>
             </StackPanel>
 
-            <ProgressBar Value="{Binding DownloadProgress}"
-                       IsVisible="{Binding IsLoading}"
-                       Margin="0,10,0,0"/>
-            
-            <TextBlock Text="{Binding DownloadStatus}"
-                     HorizontalAlignment="Center"
-                     IsVisible="{Binding IsLoading}"/>
-        </StackPanel>
-
-        <!-- Main Content -->
-        <Grid IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto" ColumnDefinitions="220,*">
-            <!-- Platform Sidebar -->
-            <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
-                    Background="#333333" 
-                    CornerRadius="4" 
-                    Margin="0,0,15,0">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" 
-                             Text="Platforms" 
-                             FontSize="18" 
-                             FontWeight="Bold"
-                             Margin="15,15,15,10"/>
-                    <ListBox ItemsSource="{Binding Platforms}"
-                            SelectedItem="{Binding SelectedPlatform}"
-                            Background="Transparent"
-                            Margin="5,0,5,5">
-                        <ListBox.Styles>
-                            <Style Selector="ListBoxItem">
-                                <Setter Property="Padding" Value="10"/>
-                                <Setter Property="CornerRadius" Value="4"/>
-                                <Setter Property="Margin" Value="0,2"/>
-                            </Style>
-                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-                                <Setter Property="Background" Value="#2a82da"/>
-                            </Style>
-                            <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-                                <Setter Property="Background" Value="#444444"/>
-                            </Style>
-                        </ListBox.Styles>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-
-            <!-- Top Bar -->
-            <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,0,0,15">
-                <TextBox Grid.Column="0"
-                        Text="{Binding SearchQuery}"
-                        Watermark="Search ROMs..."
-                        HorizontalAlignment="Stretch"/>
-                <Button Grid.Column="1"
-                        Content="Logout"
-                        Command="{Binding LogoutCommand}"
-                        Margin="10,0,0,0"
-                        Background="#d32f2f"/>
-            </Grid>
-
-            <!-- ROM List -->
-            <Grid Grid.Row="1" Grid.Column="1">
-                <ListBox ItemsSource="{Binding FilteredRoms}"
-                         Background="#333333"
-                         CornerRadius="4"
-                         Margin="0,0,0,15">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnDefinitions="Auto,*" Margin="5">
-                                <Image Grid.Column="0" 
-                                       Source="{Binding CoverImage}"
-                                       Width="60" Height="80"
-                                       Margin="0,0,10,0"/>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding DisplayName}" 
-                                             FontSize="14"/>
-                                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
-                                        <TextBlock Text="{Binding Size}"
-                                                 Foreground="#888888"
-                                                 VerticalAlignment="Center"/>
-                                        <Panel>
-                                            <Button Content="Download"
-                                                    Command="{Binding ((vm:MainViewModel)DataContext).DownloadRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    IsVisible="{Binding !IsDownloaded}"/>
-                                            <StackPanel Orientation="Horizontal" 
-                                                        Spacing="5" 
-                                                        IsVisible="{Binding IsDownloaded}">
-                                                <Button Content="Downloaded"
-                                                        IsEnabled="False"
-                                                        Background="#666666"/>
-                                                <Button Content="Delete"
-                                                        Background="#d32f2f"
-                                                        Command="{Binding ((vm:MainViewModel)DataContext).DeleteRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"/>
-                                            </StackPanel>
-                                        </Panel>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-                <!-- Loading Overlay -->
-                <Border IsVisible="{Binding IsLoading}"
-                       Background="#1e1e1e"
-                       BorderBrush="#333333"
-                       BorderThickness="1"
-                       Padding="20"
-                       MaxWidth="400"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center">
-                    <StackPanel Spacing="10">
-                        <TextBlock Text="{Binding DownloadStatus}"
-                                 TextWrapping="Wrap"
-                                 TextAlignment="Center"/>
-                        <ProgressBar Value="{Binding DownloadProgress}"
-                                   Width="300"/>
-                    </StackPanel>
+            <!-- Main Content -->
+            <Grid IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto" ColumnDefinitions="220,*">
+                <!-- Platform Sidebar -->
+                <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
+                        Background="#333333" 
+                        CornerRadius="4" 
+                        Margin="0,0,15,0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" 
+                                 Text="Platforms" 
+                                 FontSize="18" 
+                                 FontWeight="Bold"
+                                 Margin="15,15,15,10"/>
+                        <ListBox ItemsSource="{Binding Platforms}"
+                                SelectedItem="{Binding SelectedPlatform}"
+                                Background="Transparent"
+                                Margin="5,0,5,5">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="10"/>
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="#2a82da"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="#444444"/>
+                                </Style>
+                            </ListBox.Styles>
+                        </ListBox>
+                    </DockPanel>
                 </Border>
-            </Grid>
 
-            <!-- Status Bar -->
-            <TextBlock Grid.Row="2" Grid.Column="1"
-                     Text="{Binding StatusMessage}"
-                     HorizontalAlignment="Center"
-                     IsVisible="{Binding !IsLoading}"/>
+                <!-- Top Bar -->
+                <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,0,0,15">
+                    <TextBox Grid.Column="0"
+                            Text="{Binding SearchQuery}"
+                            Watermark="Search ROMs..."
+                            HorizontalAlignment="Stretch"/>
+                    <Button Grid.Column="1"
+                            Content="Logout"
+                            Command="{Binding LogoutCommand}"
+                            Margin="10,0,0,0"
+                            Background="#d32f2f"/>
+                </Grid>
+
+                <!-- ROM List -->
+                <ScrollViewer Grid.Row="1" Grid.Column="1">
+                    <ListBox ItemsSource="{Binding FilteredRoms}"
+                             Background="#333333"
+                             CornerRadius="4"
+                             Margin="0,0,0,15">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="Auto,*" Margin="5">
+                                    <Image Grid.Column="0" 
+                                           Source="{Binding CoverImage}"
+                                           Width="60" Height="80"
+                                           Margin="0,0,10,0"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding DisplayName}" 
+                                                 FontSize="14"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+                                            <TextBlock Text="{Binding Size}"
+                                                     Foreground="#888888"
+                                                     VerticalAlignment="Center"/>
+                                            <Panel>
+                                                <Button Content="Download"
+                                                        Command="{Binding ((vm:MainViewModel)DataContext).DownloadRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding !IsDownloaded}"/>
+                                                <StackPanel Orientation="Horizontal" 
+                                                            Spacing="5" 
+                                                            IsVisible="{Binding IsDownloaded}">
+                                                    <Button Content="Downloaded"
+                                                            IsEnabled="False"
+                                                            Background="#666666"/>
+                                                    <Button Content="Delete"
+                                                            Background="#d32f2f"
+                                                            Command="{Binding ((vm:MainViewModel)DataContext).DeleteRomCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </Panel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Grid>
         </Grid>
-    </Grid>
+
+        <!-- Loading overlay for ROM loading and downloads -->
+        <Panel Grid.RowSpan="3"
+               IsVisible="{Binding IsLoading}"
+               Background="#80000000"
+               IsHitTestVisible="True"
+               ZIndex="100">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding StatusMessage}"
+                          HorizontalAlignment="Center"
+                          Foreground="White"
+                          Margin="0,0,0,10"/>
+                <TextBlock Text="{Binding DownloadStatus}"
+                          HorizontalAlignment="Center"
+                          Foreground="White"
+                          IsVisible="{Binding DownloadStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                          Margin="0,0,0,10"/>
+                <ProgressBar Value="{Binding DownloadProgress}"
+                            Width="200"
+                            Height="4"
+                            IsVisible="{Binding DownloadStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+        </Panel>
+    </Panel>
 </Window>
