@@ -24,16 +24,30 @@ public class ApiService
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
-    public async Task<bool> LoginAsync()
+    public async Task<(bool success, string error)> LoginAsync()
     {
         try
         {
             var response = await _httpClient.PostAsync($"https://{Host}/api/login", null);
-            return response.IsSuccessStatusCode;
+            if (response.IsSuccessStatusCode)
+            {
+                return (true, string.Empty);
+            }
+            
+            return response.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Unauthorized => (false, "Invalid username or password"),
+                System.Net.HttpStatusCode.NotFound => (false, "Invalid host or API endpoint not found"),
+                _ => (false, $"Server error: {response.StatusCode}")
+            };
         }
-        catch
+        catch (HttpRequestException ex)
         {
-            return false;
+            return (false, "Could not connect to server. Please check the host address and your internet connection.");
+        }
+        catch (Exception)
+        {
+            return (false, "An unexpected error occurred while connecting to the server.");
         }
     }
 

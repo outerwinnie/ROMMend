@@ -147,32 +147,45 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(Host) || 
+                string.IsNullOrWhiteSpace(Username) || 
+                string.IsNullOrWhiteSpace(Password))
+            {
+                StatusMessage = "Please fill in all fields (Host, Username, and Password)";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(DownloadDirectory))
+            {
+                StatusMessage = "Please select a download directory before logging in";
+                return;
+            }
+
             IsLoading = true;
-            StatusMessage = "Logging in...";
+            StatusMessage = "Connecting to server...";
 
             _apiService = new ApiService(Host, Username, Password);
-            var success = await _apiService.LoginAsync();
+            var (success, error) = await _apiService.LoginAsync();
 
             if (success)
             {
                 _settings.SaveSettings(Username, Password, Host, DownloadDirectory);
                 IsLoggedIn = true;
-                StatusMessage = "Login successful!";
+                StatusMessage = "Connected successfully!";
                 await LoadRomsAsync();
             }
             else
             {
-                StatusMessage = "Login failed. Please check your credentials.";
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
-                {
-                    _settings.ClearSettings();
-                    _cacheService.ClearCache();
-                }
+                StatusMessage = error;
+                _settings.ClearSettings();
+                _cacheService.ClearCache();
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = $"Login error: {ex.Message}";
+            _settings.ClearSettings();
+            _cacheService.ClearCache();
         }
         finally
         {
@@ -208,35 +221,7 @@ public partial class MainViewModel : ViewModelBase
             Platforms.Clear();
             Platforms.Add("All Platforms");
 
-            // Try to load from cache first
-            var cachedRoms = await _cacheService.LoadRomsListAsync();
-            if (cachedRoms != null)
-            {
-                foreach (var rom in cachedRoms)
-                {
-                    var romViewModel = new RomViewModel(rom, _cacheService);
-                    await romViewModel.LoadCoverImageAsync(_apiService);
-                    Roms.Add(romViewModel);
-                    if (!Platforms.Contains(rom.PlatformFsSlug))
-                    {
-                        Platforms.Add(rom.PlatformFsSlug);
-                    }
-                }
-
-                SortPlatforms();
-                StatusMessage = $"Loaded {cachedRoms.Count} ROMs from cache";
-                SelectedPlatform = "All Platforms";
-                FilterRoms();
-                return;
-            }
-
-            // If cache miss or error, load from API
             var roms = await _apiService.GetRomsAsync();
-            if (roms.Count > 0)
-            {
-                await _cacheService.SaveRomsListAsync(roms);
-            }
-
             foreach (var rom in roms)
             {
                 var romViewModel = new RomViewModel(rom, _cacheService);
@@ -256,6 +241,10 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Error loading ROMs: {ex.Message}";
+            Roms.Clear();
+            FilteredRoms.Clear();
+            Platforms.Clear();
+            Platforms.Add("All Platforms");
         }
         finally
         {

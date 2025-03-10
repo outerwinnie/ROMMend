@@ -82,6 +82,11 @@
                     <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Password}" PasswordChar="•" Margin="0,10,0,0"/>
                 </Grid>
 
+                <TextBlock Text="{Binding StatusMessage}"
+                         Foreground="#ff4444"
+                         HorizontalAlignment="Center"
+                         IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                     <Button Command="{Binding LoginCommand}"
                             IsEnabled="{Binding !IsLoading}">
@@ -91,6 +96,11 @@
                         Select Download Directory
                     </Button>
                 </StackPanel>
+
+                <ProgressBar IsVisible="{Binding IsLoading}"
+                           IsIndeterminate="True"
+                           Height="2"
+                           Margin="0,10,0,0"/>
             </StackPanel>
 
             <!-- Main Content -->
