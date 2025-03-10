@@ -412,17 +412,28 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
-            var filePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower(), rom.FsName);
+            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
+            var filePath = Path.Combine(platformDir, rom.FsName);
+            var folderPath = Path.Combine(platformDir, Path.GetFileNameWithoutExtension(rom.FsName));
+
+            // Delete the file if it exists (for non-ZIP files)
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
-                rom.IsDownloaded = false;
-                StatusMessage = $"Deleted {rom.Name}";
             }
+
+            // Delete the extracted folder if it exists (for ZIP files)
+            if (Directory.Exists(folderPath))
+            {
+                Directory.Delete(folderPath, true);
+            }
+
+            rom.IsDownloaded = false;
+            StatusMessage = $"Deleted {rom.Name}";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error deleting ROM: {ex.Message}";
+            StatusMessage = $"Error deleting {rom.Name}: {ex.Message}";
         }
     }
 }
