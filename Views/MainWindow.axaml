@@ -104,19 +104,46 @@
             </StackPanel>
 
             <!-- Main Content -->
-            <Grid IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto">
-                <!-- Filters -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,15">
-                    <ComboBox Grid.Column="0"
-                             ItemsSource="{Binding Platforms}"
-                             SelectedItem="{Binding SelectedPlatform}"
-                             HorizontalAlignment="Left"
-                             Margin="0,0,10,0"/>
-                    <TextBox Grid.Column="1"
+            <Grid IsVisible="{Binding IsLoggedIn}" RowDefinitions="Auto,*,Auto" ColumnDefinitions="220,*">
+                <!-- Platform Sidebar -->
+                <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" 
+                        Background="#333333" 
+                        CornerRadius="4" 
+                        Margin="0,0,15,0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" 
+                                 Text="Platforms" 
+                                 FontSize="18" 
+                                 FontWeight="Bold"
+                                 Margin="15,15,15,10"/>
+                        <ListBox ItemsSource="{Binding Platforms}"
+                                SelectedItem="{Binding SelectedPlatform}"
+                                Background="Transparent"
+                                Margin="5,0,5,5">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="10"/>
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="#2a82da"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                    <Setter Property="Background" Value="#444444"/>
+                                </Style>
+                            </ListBox.Styles>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Top Bar -->
+                <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,0,0,15">
+                    <TextBox Grid.Column="0"
                             Text="{Binding SearchQuery}"
                             Watermark="Search ROMs..."
                             HorizontalAlignment="Stretch"/>
-                    <Button Grid.Column="2"
+                    <Button Grid.Column="1"
                             Content="Logout"
                             Command="{Binding LogoutCommand}"
                             Margin="10,0,0,0"
@@ -124,7 +151,7 @@
                 </Grid>
 
                 <!-- ROM List -->
-                <ListBox Grid.Row="1" 
+                <ListBox Grid.Row="1" Grid.Column="1"
                          ItemsSource="{Binding FilteredRoms}"
                          Background="#333333"
                          CornerRadius="4"
@@ -154,7 +181,7 @@
                 </ListBox>
 
                 <!-- Status and Progress -->
-                <StackPanel Grid.Row="2" Spacing="10">
+                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="10">
                     <TextBlock Text="{Binding StatusMessage}"
                              HorizontalAlignment="Center"/>
                     <ProgressBar Value="{Binding DownloadProgress}"
