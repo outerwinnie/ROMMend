@@ -20,6 +20,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly CacheService _cacheService;
     private readonly IStorageProvider _storageProvider;
     private CancellationTokenSource? _downloadCancellation;
+    private readonly CompressionService _compressionService = new();
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -324,7 +325,7 @@ public partial class MainViewModel : ViewModelBase
             if (File.Exists(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
-                StatusMessage = $"{rom.FsName} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
+                StatusMessage = $"{rom.Name} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
                 return;
             }
 
@@ -338,9 +339,41 @@ public partial class MainViewModel : ViewModelBase
             if (data != null)
             {
                 await File.WriteAllBytesAsync(filePath, data, _downloadCancellation.Token);
-                var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
-                StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
-                rom.IsDownloaded = true;
+                
+                if (Path.GetExtension(filePath).ToLower() == ".zip")
+                {
+                    try 
+                    {
+                        StatusMessage = "Extracting ZIP file...";
+                        var gameFolderName = Path.GetFileNameWithoutExtension(rom.FsName);
+                        
+                        var extractProgress = new Progress<(int percentage, string status)>(update =>
+                        {
+                            DownloadProgress = update.percentage;
+                            DownloadStatus = update.status;
+                        });
+
+                        await _compressionService.ExtractZipAsync(filePath, platformDir, gameFolderName, extractProgress);
+                        File.Delete(filePath); // Delete the ZIP after extraction
+                        rom.IsDownloaded = true;
+                        StatusMessage = $"Downloaded and extracted {rom.Name} successfully!";
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessage = $"Error extracting ZIP: {ex.Message}";
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                        return;
+                    }
+                }
+                else
+                {
+                    var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
+                    StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
+                    rom.IsDownloaded = true;
+                }
             }
             else
             {
