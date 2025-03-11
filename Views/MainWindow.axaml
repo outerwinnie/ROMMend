@@ -30,9 +30,11 @@
         </Style>
         <Style Selector="Button:pointerover">
             <Setter Property="Background" Value="#3292ea"/>
+            <Setter Property="Foreground" Value="White"/>
         </Style>
         <Style Selector="Button:pressed">
             <Setter Property="Background" Value="#1a72ca"/>
+            <Setter Property="Foreground" Value="White"/>
         </Style>
         <Style Selector="ListBox">
             <Setter Property="Background" Value="#333333"/>
