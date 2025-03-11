@@ -163,8 +163,7 @@
                 <ScrollViewer Grid.Row="1" Grid.Column="1">
                     <ListBox ItemsSource="{Binding FilteredRoms}"
                              Background="#333333"
-                             CornerRadius="4"
-                             Margin="0,0,0,15">
+                             CornerRadius="4">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid ColumnDefinitions="Auto,*" Margin="5">
