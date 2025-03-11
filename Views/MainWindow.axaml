@@ -48,6 +48,18 @@
         <Style Selector="TextBlock">
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="CheckBox:pointerover">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="CheckBox /template/ Border#NormalRectangle">
+            <Setter Property="Background" Value="#333333"/>
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+            <Setter Property="Background" Value="#2a82da"/>
+        </Style>
     </Window.Styles>
 
     <Panel>
