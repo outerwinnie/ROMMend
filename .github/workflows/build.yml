@@ -66,7 +66,7 @@ jobs:
         cp -r ./bin/Release/net8.0/${{ matrix.runtime }}/publish/* AppDir/usr/bin/
         
         # Create desktop entry
-        cat > AppDir/usr/share/applications/ROMMend.desktop << EOF
+        cat > AppDir/usr/share/applications/rommend.desktop << EOF
         [Desktop Entry]
         Name=ROMMend
         Exec=ROMMend
@@ -76,7 +76,15 @@ jobs:
         Terminal=false
         EOF
         
-        # Create a default icon
+        # Create AppRun script
+        cat > AppDir/AppRun << EOF
+        #!/bin/sh
+        cd "\$(dirname "\$0")/usr/bin"
+        exec ./ROMMend "\$@"
+        EOF
+        chmod +x AppDir/AppRun
+        
+        # Create icon
         convert -size 256x256 xc:transparent -fill "#2a82da" -draw "circle 128,128 128,64" AppDir/usr/share/icons/hicolor/256x256/apps/rommend.png
         
         # Set executable permissions
