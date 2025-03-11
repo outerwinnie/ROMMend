@@ -78,7 +78,7 @@
                 <TextBlock Text="{Binding StatusMessage}"
                          Foreground="#ff4444"
                          HorizontalAlignment="Center"
-                         IsVisible="{Binding !IsLoading}"/>
+                         IsVisible="{Binding !UpdateAvailable}"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                     <Button Command="{Binding LoginCommand}"
