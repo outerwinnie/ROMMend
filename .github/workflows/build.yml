@@ -43,8 +43,10 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
           dotnet publish --configuration ${{ matrix.configuration }} --runtime win-x64 --self-contained true -p:PublishSingleFile=true
+          cp platform_folders.template.json bin/${{ matrix.configuration }}/net8.0/win-x64/publish/platform_folders.json
         else
           dotnet publish --configuration ${{ matrix.configuration }} --runtime linux-x64 --self-contained true -p:PublishSingleFile=true
+          cp platform_folders.template.json bin/${{ matrix.configuration }}/net8.0/linux-x64/publish/platform_folders.json
         fi
       shell: bash
       
