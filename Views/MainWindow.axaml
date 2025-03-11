@@ -78,7 +78,7 @@
                 <TextBlock Text="{Binding StatusMessage}"
                          Foreground="#ff4444"
                          HorizontalAlignment="Center"
-                         IsVisible="{Binding !IsLoading}"/>
+                         IsVisible="{Binding !UpdateAvailable}"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                     <Button Command="{Binding LoginCommand}"
@@ -213,12 +213,37 @@
             </StackPanel>
         </Panel>
 
-        <Button Command="{Binding UpdateApplicationCommand}"
-                IsVisible="{Binding UpdateAvailable}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <PathIcon Data="{StaticResource arrow_circle_up_regular}" />
-                <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}" />
-            </StackPanel>
-        </Button>
+        <Panel Grid.RowSpan="3"
+               IsVisible="{Binding UpdateAvailable}"
+               Background="#80000000"
+               IsHitTestVisible="True"
+               ZIndex="100">
+            <Border Background="#333333"
+                    CornerRadius="4"
+                    Padding="20"
+                    MinWidth="200"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="{Binding StatusMessage}"
+                              HorizontalAlignment="Center"
+                              Foreground="White"
+                              TextAlignment="Center"
+                              Margin="0,0,0,15"/>
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center" 
+                                Spacing="10">
+                        <Button Command="{Binding UpdateApplicationCommand}"
+                                Background="#2a82da">
+                            <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}"/>
+                        </Button>
+                        <Button Command="{Binding SkipUpdateCommand}"
+                                Background="#666666">
+                            Skip
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Panel>
     </Panel>
 </Window>

@@ -129,13 +129,35 @@ public partial class MainViewModel : ViewModelBase
         _storageProvider = storageProvider;
         LoadSettings();
         
-        if (_settings.HasLoginCredentials())
-        {
-            _ = LoginAsync();
-        }
+        // Check for updates first, then attempt login if no update is available
+        _ = InitializeAsync();
+    }
 
-        // Check for updates on startup
-        _ = CheckForUpdateAsync();
+    private async Task InitializeAsync()
+    {
+        try
+        {
+            // Check for updates first
+            var (available, version, url) = await _updateService.CheckForUpdateAsync();
+            UpdateAvailable = available;
+            UpdateVersion = version;
+
+            if (available)
+            {
+                StatusMessage = $"Update v{version} available";
+                return; // Don't proceed with login if update is available
+            }
+
+            // Proceed with login if we have credentials and no update is available
+            if (_settings.HasLoginCredentials())
+            {
+                await LoginAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Initialization error: {ex.Message}";
+        }
     }
 
     private void LoadSettings()
@@ -168,6 +190,12 @@ public partial class MainViewModel : ViewModelBase
     {
         try
         {
+            if (UpdateAvailable)
+            {
+                StatusMessage = $"Please install the update to version {UpdateVersion} before connecting.";
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(Host) || 
                 string.IsNullOrWhiteSpace(Username) || 
                 string.IsNullOrWhiteSpace(Password))
@@ -511,6 +539,17 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SkipUpdateAsync()
+    {
+        UpdateAvailable = false;
+        // Proceed with login if we have credentials
+        if (_settings.HasLoginCredentials())
+        {
+            await LoginAsync();
         }
     }
 }
