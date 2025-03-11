@@ -144,7 +144,7 @@ public partial class MainViewModel : ViewModelBase
 
             if (available)
             {
-                StatusMessage = $"Update {version} available! Please update before connecting.";
+                StatusMessage = $"Update v{version} available";
                 return; // Don't proceed with login if update is available
             }
 
@@ -539,6 +539,17 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SkipUpdateAsync()
+    {
+        UpdateAvailable = false;
+        // Proceed with login if we have credentials
+        if (_settings.HasLoginCredentials())
+        {
+            await LoginAsync();
         }
     }
 }
