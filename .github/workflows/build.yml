@@ -1,0 +1,63 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            artifact_name: ROMMend-Windows.zip
+            runtime: win-x64
+          - os: ubuntu-latest
+            artifact_name: ROMMend-Linux.AppImage
+            runtime: linux-x64
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Get version
+      id: version
+      run: echo "version=$(date +'%Y.%m.%d').${{ github.run_number }}" >> $GITHUB_OUTPUT
+        
+    - name: Build and Publish
+      run: |
+        dotnet publish -c Release -r ${{ matrix.runtime }} \
+        -p:Version=${{ steps.version.outputs.version }} \
+        --self-contained true
+      
+    - name: Package (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        7z a ${{ matrix.artifact_name }} ./bin/Release/net8.0/${{ matrix.runtime }}/publish/*
+      
+    - name: Package (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        tar czf ${{ matrix.artifact_name }} -C ./bin/Release/net8.0/${{ matrix.runtime }}/publish .
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        files: ${{ matrix.artifact_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
