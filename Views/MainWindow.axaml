@@ -40,6 +40,22 @@
             <Setter Property="Background" Value="#333333"/>
             <Setter Property="CornerRadius" Value="4"/>
         </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+        <Style Selector="ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#444444"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2a82da"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
         <Style Selector="ProgressBar">
             <Setter Property="Height" Value="1"/>
             <Setter Property="CornerRadius" Value="0"/>
