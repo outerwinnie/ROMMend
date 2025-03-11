@@ -47,7 +47,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
         
     - name: Restore dependencies
       run: dotnet restore
@@ -59,19 +59,19 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         dotnet publish -c Release -r win-x64 --self-contained true
-        7z a ${{ matrix.artifact_name }} ./bin/Release/net7.0/win-x64/publish/*
+        7z a ${{ matrix.artifact_name }} ./bin/Release/net8.0/win-x64/publish/*
       
     - name: Publish Linux
       if: matrix.os == 'ubuntu-latest'
       run: |
         dotnet publish -c Release -r linux-x64 --self-contained true
-        tar czf ${{ matrix.artifact_name }} -C ./bin/Release/net7.0/linux-x64/publish .
+        tar czf ${{ matrix.artifact_name }} -C ./bin/Release/net8.0/linux-x64/publish .
       
     - name: Publish macOS
       if: matrix.os == 'macos-latest'
       run: |
         dotnet publish -c Release -r osx-x64 --self-contained true
-        zip -j ${{ matrix.artifact_name }} ./bin/Release/net7.0/osx-x64/publish/*
+        zip -j ${{ matrix.artifact_name }} ./bin/Release/net8.0/osx-x64/publish/*
       
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
