@@ -314,7 +314,7 @@ public partial class MainViewModel : ViewModelBase
             SortPlatforms();
             SelectedPlatform = "All Platforms";
 
-            // Load cover images with progress
+            // Load cover images and check downloads with progress
             if (roms.Count > 0)
             {
                 for (int i = 0; i < roms.Count; i++)
@@ -322,10 +322,11 @@ public partial class MainViewModel : ViewModelBase
                     var rom = roms[i];
                     var percentage = (int)((i + 1) * 100.0 / roms.Count);
                     DownloadProgress = percentage;
-                    DownloadStatus = $"Loading cover images ({i + 1}/{roms.Count})";
+                    DownloadStatus = $"Loading ROM info ({i + 1}/{roms.Count})";
 
                     var romViewModel = new RomViewModel(rom, _cacheService);
                     await romViewModel.LoadCoverImageAsync(_apiService);
+                    romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
                     Roms.Add(romViewModel);
                 }
             }
