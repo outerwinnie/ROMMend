@@ -1,0 +1,53 @@
+name: Build ROMMend
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        dotnet-version: ['8.0.x']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+    
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libx11-dev
+        sudo apt-get install -y libxrandr-dev
+        sudo apt-get install -y libxinerama-dev
+        sudo apt-get install -y libxcursor-dev
+        sudo apt-get install -y libxi-dev
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+    
+    - name: Publish
+      run: dotnet publish --configuration Release --runtime ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ROMMend-${{ matrix.os }}
+        path: |
+          bin/Release/net8.0/${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }}/publish/ 
