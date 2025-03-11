@@ -36,7 +36,13 @@ jobs:
         
     - name: Build and Publish
       shell: bash
-      run: dotnet publish -c Release -r ${{ matrix.runtime }} -p:Version=${{ steps.version.outputs.version }} --self-contained true
+      run: |
+        VERSION=${{ steps.version.outputs.version }}
+        dotnet publish -c Release -r ${{ matrix.runtime }} \
+        -p:Version=$VERSION \
+        -p:AssemblyVersion=$VERSION \
+        -p:FileVersion=$VERSION \
+        --self-contained true
       
     - name: Package (Windows)
       if: matrix.os == 'windows-latest'
@@ -64,7 +70,7 @@ jobs:
         cp -r ./bin/Release/net8.0/${{ matrix.runtime }}/publish/* AppDir/usr/bin/
         
         # Create desktop entry
-        cat > AppDir/usr/share/applications/rommend.desktop << EOF
+        cat > AppDir/ROMMend.desktop << EOF
         [Desktop Entry]
         Name=ROMMend
         Exec=ROMMend
@@ -83,7 +89,7 @@ jobs:
         chmod +x AppDir/AppRun
         
         # Create icon
-        convert -size 256x256 xc:transparent -fill "#2a82da" -draw "circle 128,128 128,64" AppDir/usr/share/icons/hicolor/256x256/apps/rommend.png
+        convert -size 256x256 xc:transparent -fill "#2a82da" -draw "circle 128,128 128,64" AppDir/rommend.png
         
         # Set executable permissions
         chmod +x AppDir/usr/bin/ROMMend
