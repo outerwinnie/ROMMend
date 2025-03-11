@@ -214,7 +214,6 @@ public partial class MainViewModel : ViewModelBase
             }
 
             IsLoading = true;
-            StatusMessage = "Connecting to server...";
 
             var protocol = UseHttps ? "https" : "http";
             var cleanHost = Host.Replace("http://", "").Replace("https://", "");
@@ -227,20 +226,19 @@ public partial class MainViewModel : ViewModelBase
             {
                 _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
                 IsLoggedIn = true;
-                StatusMessage = "Connected successfully!";
                 await LoadRomsAsync();
             }
             else
             {
                 StatusMessage = error;
-                _apiService = null; // Reset API service to allow retry
+                _apiService = null;
                 IsLoggedIn = false;
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Login error: {ex.Message}";
-            _apiService = null; // Reset API service to allow retry
+            _apiService = null;
             IsLoggedIn = false;
         }
         finally
