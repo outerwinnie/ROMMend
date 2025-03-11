@@ -65,26 +65,15 @@ public class UpdateService
         try
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var assemblyLocation = assembly.Location;
-            var projectDirectory = Path.GetDirectoryName(assemblyLocation);
-            
-            while (projectDirectory != null && !File.Exists(Path.Combine(projectDirectory, "ROMMend.csproj")))
+            var version = assembly.GetName().Version;
+            if (version != null)
             {
-                projectDirectory = Path.GetDirectoryName(projectDirectory);
+                // Use only major.minor.build
+                var versionString = $"{version.Major}.{version.Minor}.{version.Build}";
+                Console.WriteLine($"Found version in assembly: {versionString}"); // Debug log
+                return versionString;
             }
-
-            if (projectDirectory == null)
-                return "0.1.5"; // Fallback to current version
-
-            var csprojPath = Path.Combine(projectDirectory, "ROMMend.csproj");
-            var csprojContent = File.ReadAllText(csprojPath);
-            
-            var versionStart = csprojContent.IndexOf("<Version>") + 9;
-            var versionEnd = csprojContent.IndexOf("</Version>");
-            var version = csprojContent.Substring(versionStart, versionEnd - versionStart);
-            
-            Console.WriteLine($"Found version in csproj: {version}"); // Debug log
-            return version;
+            return "0.1.5"; // Fallback to current version
         }
         catch (Exception ex)
         {
