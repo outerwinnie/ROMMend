@@ -45,10 +45,45 @@ jobs:
       run: |
         7z a ${{ matrix.artifact_name }} ./bin/Release/net8.0/${{ matrix.runtime }}/publish/*
       
+    - name: Setup AppImage Tools (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libfuse2 imagemagick
+        wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+        chmod +x appimagetool
+        sudo mv appimagetool /usr/local/bin/
+      
     - name: Package (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        tar czf ${{ matrix.artifact_name }} -C ./bin/Release/net8.0/${{ matrix.runtime }}/publish .
+        # Create AppDir structure
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        
+        # Copy application files
+        cp -r ./bin/Release/net8.0/${{ matrix.runtime }}/publish/* AppDir/usr/bin/
+        
+        # Create desktop entry
+        cat > AppDir/usr/share/applications/ROMMend.desktop << EOF
+        [Desktop Entry]
+        Name=ROMMend
+        Exec=ROMMend
+        Icon=rommend
+        Type=Application
+        Categories=Utility;
+        Terminal=false
+        EOF
+        
+        # Create a default icon
+        convert -size 256x256 xc:transparent -fill "#2a82da" -draw "circle 128,128 128,64" AppDir/usr/share/icons/hicolor/256x256/apps/rommend.png
+        
+        # Set executable permissions
+        chmod +x AppDir/usr/bin/ROMMend
+        
+        # Create AppImage
+        appimagetool AppDir ${{ matrix.artifact_name }}
       
     - name: Create Release
       uses: softprops/action-gh-release@v1
