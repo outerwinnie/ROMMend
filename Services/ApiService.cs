@@ -29,7 +29,7 @@ public class ApiService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"https://{Host}/api/login", null);
+            var response = await _httpClient.PostAsync($"{Host}/api/login", null);
             if (response.IsSuccessStatusCode)
             {
                 return (true, string.Empty);
@@ -57,7 +57,7 @@ public class ApiService
         try
         {
             progress?.Report((0, "Fetching ROM list..."));
-            var response = await _httpClient.GetAsync($"https://{Host}/api/roms");
+            var response = await _httpClient.GetAsync($"{Host}/api/roms");
             if (!response.IsSuccessStatusCode) return new List<Rom>();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -92,7 +92,7 @@ public class ApiService
         try
         {
             using var response = await _httpClient.GetAsync(
-                $"https://{Host}/api/roms/{id}/content/{fsName}",
+                $"{Host}/api/roms/{id}/content/{fsName}",
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 

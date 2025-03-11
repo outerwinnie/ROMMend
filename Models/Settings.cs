@@ -1,15 +1,18 @@
 using System.IO;
 using System.Text.Json;
+using ROMMend.Services;
 
 namespace ROMMend.Models;
 
 public class Settings
 {
     private const string SettingsFile = "settings.json";
+    private readonly EncryptionService _encryptionService;
     private SettingsData _settings;
 
     public Settings()
     {
+        _encryptionService = new EncryptionService();
         _settings = LoadSettings();
     }
 
@@ -19,6 +22,7 @@ public class Settings
         public string Password { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
         public string DownloadDirectory { get; set; } = string.Empty;
+        public bool UseHttps { get; set; } = true;
     }
 
     private SettingsData LoadSettings()
@@ -27,10 +31,11 @@ public class Settings
         {
             try
             {
-                var json = File.ReadAllText(SettingsFile);
+                var encryptedJson = File.ReadAllText(SettingsFile);
+                var json = _encryptionService.Decrypt(encryptedJson);
                 return JsonSerializer.Deserialize<SettingsData>(json) ?? GetDefaultSettings();
             }
-            catch (JsonException)
+            catch
             {
                 return GetDefaultSettings();
             }
@@ -38,15 +43,17 @@ public class Settings
         return GetDefaultSettings();
     }
 
-    public void SaveSettings(string username, string password, string host, string downloadDirectory)
+    public void SaveSettings(string username, string password, string host, string downloadDirectory, bool useHttps)
     {
         _settings.Username = username;
         _settings.Password = password;
         _settings.Host = host;
         _settings.DownloadDirectory = downloadDirectory;
+        _settings.UseHttps = useHttps;
         
         var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsFile, json);
+        var encryptedJson = _encryptionService.Encrypt(json);
+        File.WriteAllText(SettingsFile, encryptedJson);
     }
 
     public void ClearSettings()
@@ -66,6 +73,7 @@ public class Settings
         "password" => _settings.Password,
         "host" => _settings.Host,
         "download_directory" => _settings.DownloadDirectory,
+        "use_https" => _settings.UseHttps.ToString(),
         _ => string.Empty
     };
 

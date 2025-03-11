@@ -20,6 +20,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly CacheService _cacheService;
     private readonly IStorageProvider _storageProvider;
     private CancellationTokenSource? _downloadCancellation;
+    private readonly CompressionService _compressionService = new();
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -65,6 +66,9 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isDownloading;
+
+    [ObservableProperty]
+    private bool _useHttps = true;
 
     partial void OnSelectedPlatformChanged(string? value)
     {
@@ -129,6 +133,7 @@ public partial class MainViewModel : ViewModelBase
         Password = _settings.Get("password");
         Host = _settings.Get("host");
         DownloadDirectory = _settings.Get("download_directory");
+        UseHttps = bool.Parse(_settings.Get("use_https"));
     }
 
     [RelayCommand]
@@ -143,7 +148,7 @@ public partial class MainViewModel : ViewModelBase
         if (folder.Count > 0)
         {
             DownloadDirectory = folder[0].Path.LocalPath;
-            _settings.SaveSettings(Username, Password, Host, DownloadDirectory);
+            _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
         }
     }
 
@@ -169,12 +174,16 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = true;
             StatusMessage = "Connecting to server...";
 
-            _apiService = new ApiService(Host, Username, Password);
+            var protocol = UseHttps ? "https" : "http";
+            var cleanHost = Host.Replace("http://", "").Replace("https://", "");
+            var fullHost = $"{protocol}://{cleanHost}";
+            
+            _apiService = new ApiService(fullHost, Username, Password);
             var (success, error) = await _apiService.LoginAsync();
 
             if (success)
             {
-                _settings.SaveSettings(Username, Password, Host, DownloadDirectory);
+                _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
                 IsLoggedIn = true;
                 StatusMessage = "Connected successfully!";
                 await LoadRomsAsync();
@@ -324,7 +333,7 @@ public partial class MainViewModel : ViewModelBase
             if (File.Exists(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
-                StatusMessage = $"{rom.FsName} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
+                StatusMessage = $"{rom.Name} already exists ({fileInfo.Length / (1024.0 * 1024.0):F1} MB)";
                 return;
             }
 
@@ -338,9 +347,41 @@ public partial class MainViewModel : ViewModelBase
             if (data != null)
             {
                 await File.WriteAllBytesAsync(filePath, data, _downloadCancellation.Token);
-                var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
-                StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
-                rom.IsDownloaded = true;
+                
+                if (Path.GetExtension(filePath).ToLower() == ".zip")
+                {
+                    try 
+                    {
+                        StatusMessage = "Extracting ZIP file...";
+                        var gameFolderName = Path.GetFileNameWithoutExtension(rom.FsName);
+                        
+                        var extractProgress = new Progress<(int percentage, string status)>(update =>
+                        {
+                            DownloadProgress = update.percentage;
+                            DownloadStatus = update.status;
+                        });
+
+                        await _compressionService.ExtractZipAsync(filePath, platformDir, gameFolderName, extractProgress);
+                        File.Delete(filePath); // Delete the ZIP after extraction
+                        rom.IsDownloaded = true;
+                        StatusMessage = $"Downloaded and extracted {rom.Name} successfully!";
+                    }
+                    catch (Exception ex)
+                    {
+                        StatusMessage = $"Error extracting ZIP: {ex.Message}";
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                        return;
+                    }
+                }
+                else
+                {
+                    var fileSize = new FileInfo(filePath).Length / (1024.0 * 1024.0);
+                    StatusMessage = $"Downloaded {rom.Name} successfully! ({fileSize:F1} MB)";
+                    rom.IsDownloaded = true;
+                }
             }
             else
             {
@@ -379,17 +420,28 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
-            var filePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower(), rom.FsName);
+            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
+            var filePath = Path.Combine(platformDir, rom.FsName);
+            var folderPath = Path.Combine(platformDir, Path.GetFileNameWithoutExtension(rom.FsName));
+
+            // Delete the file if it exists (for non-ZIP files)
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
-                rom.IsDownloaded = false;
-                StatusMessage = $"Deleted {rom.Name}";
             }
+
+            // Delete the extracted folder if it exists (for ZIP files)
+            if (Directory.Exists(folderPath))
+            {
+                Directory.Delete(folderPath, true);
+            }
+
+            rom.IsDownloaded = false;
+            StatusMessage = $"Deleted {rom.Name}";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error deleting ROM: {ex.Message}";
+            StatusMessage = $"Error deleting {rom.Name}: {ex.Message}";
         }
     }
 }
