@@ -1,15 +1,18 @@
 using System.IO;
 using System.Text.Json;
+using ROMMend.Services;
 
 namespace ROMMend.Models;
 
 public class Settings
 {
     private const string SettingsFile = "settings.json";
+    private readonly EncryptionService _encryptionService;
     private SettingsData _settings;
 
     public Settings()
     {
+        _encryptionService = new EncryptionService();
         _settings = LoadSettings();
     }
 
@@ -28,10 +31,11 @@ public class Settings
         {
             try
             {
-                var json = File.ReadAllText(SettingsFile);
+                var encryptedJson = File.ReadAllText(SettingsFile);
+                var json = _encryptionService.Decrypt(encryptedJson);
                 return JsonSerializer.Deserialize<SettingsData>(json) ?? GetDefaultSettings();
             }
-            catch (JsonException)
+            catch
             {
                 return GetDefaultSettings();
             }
@@ -48,7 +52,8 @@ public class Settings
         _settings.UseHttps = useHttps;
         
         var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(SettingsFile, json);
+        var encryptedJson = _encryptionService.Encrypt(json);
+        File.WriteAllText(SettingsFile, encryptedJson);
     }
 
     public void ClearSettings()
