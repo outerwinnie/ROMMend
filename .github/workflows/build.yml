@@ -59,7 +59,7 @@ jobs:
           zip -r ../../../../../ROMMend-Linux.zip *
         fi
       shell: bash
-      
+    
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
