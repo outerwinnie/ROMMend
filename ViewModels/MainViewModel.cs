@@ -371,6 +371,12 @@ public partial class MainViewModel : ViewModelBase
             // Use the original filename
             var filePath = Path.Combine(platformDir, rom.FsName);
             
+            // Add .zip extension if missing
+            if (string.IsNullOrEmpty(Path.GetExtension(filePath)))
+            {
+                filePath = Path.ChangeExtension(filePath, ".zip");
+            }
+            
             // Check if file already exists
             if (File.Exists(filePath))
             {
@@ -466,6 +472,7 @@ public partial class MainViewModel : ViewModelBase
             var platformFolderName = _platformFolders.GetFolderName(rom.PlatformFsSlug);
             var platformDir = Path.Combine(DownloadDirectory, platformFolderName);
             var filePath = Path.Combine(platformDir, rom.FsName);
+            var zipPath = Path.ChangeExtension(filePath, ".zip");
             var folderPath = Path.Combine(platformDir, Path.GetFileNameWithoutExtension(rom.FsName));
 
             // Delete the file if it exists (for non-ZIP files)
@@ -474,7 +481,13 @@ public partial class MainViewModel : ViewModelBase
                 File.Delete(filePath);
             }
 
-            // Delete the extracted folder if it exists (for ZIP files)
+            // Delete the ZIP file if it exists
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            // Delete the extracted folder if it exists
             if (Directory.Exists(folderPath))
             {
                 Directory.Delete(folderPath, true);
