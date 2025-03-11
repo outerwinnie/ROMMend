@@ -78,7 +78,8 @@
                 <TextBlock Text="{Binding StatusMessage}"
                          Foreground="#ff4444"
                          HorizontalAlignment="Center"
-                         IsVisible="{Binding !UpdateAvailable}"/>
+                         IsVisible="{Binding !UpdateAvailable}"
+                         IsEnabled="{Binding !IsLoading}"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
                     <Button Command="{Binding LoginCommand}"
@@ -238,7 +239,8 @@
                             <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}"/>
                         </Button>
                         <Button Command="{Binding SkipUpdateCommand}"
-                                Background="#666666">
+                                Background="#666666"
+                                IsEnabled="{Binding !IsUpdating}">
                             Skip
                         </Button>
                     </StackPanel>

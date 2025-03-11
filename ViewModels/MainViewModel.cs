@@ -78,6 +78,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _updateVersion = string.Empty;
 
+    [ObservableProperty]
+    private bool _isUpdating;
+
     partial void OnSelectedPlatformChanged(string? value)
     {
         FilterRoms();
@@ -211,7 +214,6 @@ public partial class MainViewModel : ViewModelBase
             }
 
             IsLoading = true;
-            StatusMessage = "Connecting to server...";
 
             var protocol = UseHttps ? "https" : "http";
             var cleanHost = Host.Replace("http://", "").Replace("https://", "");
@@ -224,20 +226,19 @@ public partial class MainViewModel : ViewModelBase
             {
                 _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
                 IsLoggedIn = true;
-                StatusMessage = "Connected successfully!";
                 await LoadRomsAsync();
             }
             else
             {
                 StatusMessage = error;
-                _apiService = null; // Reset API service to allow retry
+                _apiService = null;
                 IsLoggedIn = false;
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Login error: {ex.Message}";
-            _apiService = null; // Reset API service to allow retry
+            _apiService = null;
             IsLoggedIn = false;
         }
         finally
@@ -311,7 +312,7 @@ public partial class MainViewModel : ViewModelBase
             SortPlatforms();
             SelectedPlatform = "All Platforms";
 
-            // Load cover images with progress
+            // Load cover images and check downloads with progress
             if (roms.Count > 0)
             {
                 for (int i = 0; i < roms.Count; i++)
@@ -319,10 +320,11 @@ public partial class MainViewModel : ViewModelBase
                     var rom = roms[i];
                     var percentage = (int)((i + 1) * 100.0 / roms.Count);
                     DownloadProgress = percentage;
-                    DownloadStatus = $"Loading cover images ({i + 1}/{roms.Count})";
+                    DownloadStatus = $"Loading ROM info ({i + 1}/{roms.Count})";
 
                     var romViewModel = new RomViewModel(rom, _cacheService);
                     await romViewModel.LoadCoverImageAsync(_apiService);
+                    romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
                     Roms.Add(romViewModel);
                 }
             }
@@ -367,6 +369,12 @@ public partial class MainViewModel : ViewModelBase
 
             // Use the original filename
             var filePath = Path.Combine(platformDir, rom.FsName);
+            
+            // Add .zip extension if missing
+            if (string.IsNullOrEmpty(Path.GetExtension(filePath)))
+            {
+                filePath = Path.ChangeExtension(filePath, ".zip");
+            }
             
             // Check if file already exists
             if (File.Exists(filePath))
@@ -463,6 +471,7 @@ public partial class MainViewModel : ViewModelBase
             var platformFolderName = _platformFolders.GetFolderName(rom.PlatformFsSlug);
             var platformDir = Path.Combine(DownloadDirectory, platformFolderName);
             var filePath = Path.Combine(platformDir, rom.FsName);
+            var zipPath = Path.ChangeExtension(filePath, ".zip");
             var folderPath = Path.Combine(platformDir, Path.GetFileNameWithoutExtension(rom.FsName));
 
             // Delete the file if it exists (for non-ZIP files)
@@ -471,7 +480,13 @@ public partial class MainViewModel : ViewModelBase
                 File.Delete(filePath);
             }
 
-            // Delete the extracted folder if it exists (for ZIP files)
+            // Delete the ZIP file if it exists
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            // Delete the extracted folder if it exists
             if (Directory.Exists(folderPath))
             {
                 Directory.Delete(folderPath, true);
@@ -513,6 +528,7 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
+            IsUpdating = true;
             StatusMessage = "Downloading update...";
             
             var (_, _, url) = await _updateService.CheckForUpdateAsync();
@@ -537,6 +553,7 @@ public partial class MainViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            IsUpdating = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
         }

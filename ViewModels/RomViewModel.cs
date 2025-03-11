@@ -59,6 +59,9 @@ public partial class RomViewModel : ViewModelBase
     {
         var platformFolderName = platformFolders.GetFolderName(PlatformFsSlug);
         var filePath = Path.Combine(downloadDirectory, platformFolderName, FsName);
-        IsDownloaded = File.Exists(filePath);
+        var zipPath = Path.ChangeExtension(filePath, ".zip");
+        var folderPath = Path.Combine(downloadDirectory, platformFolderName, Path.GetFileNameWithoutExtension(FsName));
+        
+        IsDownloaded = File.Exists(filePath) || File.Exists(zipPath) || Directory.Exists(folderPath);
     }
 }
