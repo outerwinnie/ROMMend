@@ -81,12 +81,20 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isUpdating;
 
+    [ObservableProperty]
+    private bool _showOnlyInstalled;
+
     partial void OnSelectedPlatformChanged(string? value)
     {
         FilterRoms();
     }
 
     partial void OnSearchQueryChanged(string value)
+    {
+        FilterRoms();
+    }
+
+    partial void OnShowOnlyInstalledChanged(bool value)
     {
         FilterRoms();
     }
@@ -100,6 +108,12 @@ public partial class MainViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(SelectedPlatform) && SelectedPlatform != "All Platforms")
         {
             romsToShow = romsToShow.Where(r => r.PlatformFsSlug == SelectedPlatform);
+        }
+
+        // Filter by installed status
+        if (ShowOnlyInstalled)
+        {
+            romsToShow = romsToShow.Where(r => r.IsDownloaded);
         }
 
         // Filter by search query
