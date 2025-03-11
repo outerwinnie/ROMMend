@@ -213,12 +213,24 @@
             </StackPanel>
         </Panel>
 
-        <Button Command="{Binding UpdateApplicationCommand}"
-                IsVisible="{Binding UpdateAvailable}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <PathIcon Data="{StaticResource arrow_circle_up_regular}" />
-                <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}" />
+        <Panel Grid.RowSpan="3"
+               IsVisible="{Binding UpdateAvailable}"
+               Background="#80000000"
+               IsHitTestVisible="True"
+               ZIndex="100">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding StatusMessage}"
+                          HorizontalAlignment="Center"
+                          Foreground="White"
+                          Margin="0,0,0,10"/>
+                <Button Command="{Binding UpdateApplicationCommand}"
+                        HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource arrow_circle_up_regular}" />
+                        <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
-        </Button>
+        </Panel>
     </Panel>
 </Window>
