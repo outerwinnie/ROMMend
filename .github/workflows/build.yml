@@ -1,11 +1,9 @@
-name: Build ROMMend
+name: Build and Release ROMMend
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -50,10 +48,25 @@ jobs:
           dotnet publish --configuration ${{ matrix.configuration }} --runtime linux-x64 --self-contained true -p:PublishSingleFile=true
         fi
       shell: bash
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      
+    - name: Create ZIP
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          cd bin/${{ matrix.configuration }}/net8.0/win-x64/publish/
+          7z a ../../../../../ROMMend-Windows.zip *
+        else
+          cd bin/${{ matrix.configuration }}/net8.0/linux-x64/publish/
+          zip -r ../../../../../ROMMend-Linux.zip *
+        fi
+      shell: bash
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        name: ROMMend-${{ matrix.os }}
-        path: |
-          bin/${{ matrix.configuration }}/net8.0/**/publish/ 
+        files: |
+          ROMMend-Windows.zip
+          ROMMend-Linux.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

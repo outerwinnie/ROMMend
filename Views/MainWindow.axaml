@@ -212,5 +212,13 @@
                         IsVisible="{Binding IsDownloading}"/>
             </StackPanel>
         </Panel>
+
+        <Button Command="{Binding UpdateApplicationCommand}"
+                IsVisible="{Binding UpdateAvailable}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <PathIcon Data="{StaticResource arrow_circle_up_regular}" />
+                <TextBlock Text="{Binding UpdateVersion, StringFormat='Update to v{0}'}" />
+            </StackPanel>
+        </Button>
     </Panel>
 </Window>

@@ -1,0 +1,61 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version type to bump (major, minor, patch)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Update Version Numbers
+        run: |
+          # Get current version from csproj
+          CURRENT_VERSION=$(grep -oP '(?<=<Version>)[^<]+' ROMMend.csproj)
+          
+          # Split version
+          IFS='.' read -r -a version_parts <<< "$CURRENT_VERSION"
+          MAJOR="${version_parts[0]}"
+          MINOR="${version_parts[1]}"
+          PATCH="${version_parts[2]}"
+          
+          # Bump version based on input
+          if [[ "${{ github.event.inputs.version_type }}" == "major" ]]; then
+            NEW_VERSION="$((MAJOR + 1)).0.0"
+          elif [[ "${{ github.event.inputs.version_type }}" == "minor" ]]; then
+            NEW_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          else
+            NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          
+          # Update version in files
+          sed -i "s/<Version>.*<\/Version>/<Version>$NEW_VERSION<\/Version>/" ROMMend.csproj
+          sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>$NEW_VERSION<\/AssemblyVersion>/" ROMMend.csproj
+          sed -i "s/<FileVersion>.*<\/FileVersion>/<FileVersion>$NEW_VERSION<\/FileVersion>/" ROMMend.csproj
+          sed -i "s/version=\".*\" name=\"ROMMend/version=\"$NEW_VERSION.0\" name=\"ROMMend/" app.manifest
+          
+          # Commit and tag
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add ROMMend.csproj app.manifest
+          git commit -m "Bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push && git push --tags 

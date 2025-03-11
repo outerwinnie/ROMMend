@@ -22,6 +22,7 @@ public partial class MainViewModel : ViewModelBase
     private CancellationTokenSource? _downloadCancellation;
     private readonly CompressionService _compressionService = new();
     private readonly PlatformFolders _platformFolders = new();
+    private readonly UpdateService _updateService = new();
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -70,6 +71,12 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _useHttps = true;
+
+    [ObservableProperty]
+    private bool _updateAvailable;
+
+    [ObservableProperty]
+    private string _updateVersion = string.Empty;
 
     partial void OnSelectedPlatformChanged(string? value)
     {
@@ -126,6 +133,9 @@ public partial class MainViewModel : ViewModelBase
         {
             _ = LoginAsync();
         }
+
+        // Check for updates on startup
+        _ = CheckForUpdateAsync();
     }
 
     private void LoadSettings()
@@ -445,6 +455,62 @@ public partial class MainViewModel : ViewModelBase
         catch (Exception ex)
         {
             StatusMessage = $"Error deleting {rom.Name}: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdateAsync()
+    {
+        try
+        {
+            var (available, version, _) = await _updateService.CheckForUpdateAsync();
+            UpdateAvailable = available;
+            UpdateVersion = version;
+            if (available)
+            {
+                StatusMessage = $"Update {version} available!";
+            }
+        }
+        catch
+        {
+            // Ignore update check errors
+        }
+    }
+
+    [RelayCommand]
+    private async Task UpdateApplicationAsync()
+    {
+        if (!UpdateAvailable) return;
+
+        try
+        {
+            IsLoading = true;
+            StatusMessage = "Downloading update...";
+            
+            var (_, _, url) = await _updateService.CheckForUpdateAsync();
+            if (string.IsNullOrEmpty(url))
+            {
+                StatusMessage = "Update failed: Could not get download URL";
+                return;
+            }
+
+            var progress = new Progress<(int percentage, string status)>(update =>
+            {
+                DownloadProgress = update.percentage;
+                DownloadStatus = update.status;
+            });
+
+            await _updateService.DownloadAndInstallUpdateAsync(url, progress);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Update failed: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            DownloadProgress = 0;
+            DownloadStatus = string.Empty;
         }
     }
 }
