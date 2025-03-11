@@ -78,6 +78,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _updateVersion = string.Empty;
 
+    [ObservableProperty]
+    private bool _isUpdating;
+
     partial void OnSelectedPlatformChanged(string? value)
     {
         FilterRoms();
@@ -513,6 +516,7 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
+            IsUpdating = true;
             StatusMessage = "Downloading update...";
             
             var (_, _, url) = await _updateService.CheckForUpdateAsync();
@@ -537,6 +541,7 @@ public partial class MainViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            IsUpdating = false;
             DownloadProgress = 0;
             DownloadStatus = string.Empty;
         }
