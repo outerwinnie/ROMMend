@@ -21,6 +21,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly IStorageProvider _storageProvider;
     private CancellationTokenSource? _downloadCancellation;
     private readonly CompressionService _compressionService = new();
+    private readonly PlatformFolders _platformFolders = new();
 
     [ObservableProperty]
     private string _username = string.Empty;
@@ -322,8 +323,8 @@ public partial class MainViewModel : ViewModelBase
             StatusMessage = string.Empty;
             _downloadCancellation = new CancellationTokenSource();
 
-            // Create platform subfolder
-            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
+            var platformFolderName = _platformFolders.GetFolderName(rom.PlatformFsSlug);
+            var platformDir = Path.Combine(DownloadDirectory, platformFolderName);
             Directory.CreateDirectory(platformDir);
 
             // Use the original filename
@@ -392,7 +393,8 @@ public partial class MainViewModel : ViewModelBase
         {
             StatusMessage = "Download cancelled";
             // Clean up partial download if it exists
-            var tempFilePath = Path.Combine(DownloadDirectory, rom.PlatformFsSlug, rom.FsName);
+            var platformFolderName = _platformFolders.GetFolderName(rom.PlatformFsSlug);
+            var tempFilePath = Path.Combine(DownloadDirectory, platformFolderName, rom.FsName);
             if (File.Exists(tempFilePath))
             {
                 File.Delete(tempFilePath);
@@ -420,7 +422,8 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
-            var platformDir = Path.Combine(DownloadDirectory, rom.PlatformFsSlug.ToLower());
+            var platformFolderName = _platformFolders.GetFolderName(rom.PlatformFsSlug);
+            var platformDir = Path.Combine(DownloadDirectory, platformFolderName);
             var filePath = Path.Combine(platformDir, rom.FsName);
             var folderPath = Path.Combine(platformDir, Path.GetFileNameWithoutExtension(rom.FsName));
 

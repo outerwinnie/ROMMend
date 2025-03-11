@@ -24,7 +24,21 @@ A modern ROM management application built with Avalonia UI.
        "DownloadDirectory": "path_to_downloads"
    }
    ```
-4. Build and run the application:
+4. Copy `platform_folders.template.json` to `platform_folders.json`
+5. Configure your platform folder names in `platform_folders.json`:
+   ```json
+   {
+       "nes": "Nintendo Entertainment System",
+       "snes": "Super Nintendo",
+       "gb": "Game Boy",
+       "gba": "Game Boy Advance",
+       "n64": "Nintendo 64",
+       "ps1": "PlayStation",
+       "ps2": "PlayStation 2",
+       "genesis": "Sega Genesis"
+   }
+   ```
+6. Build and run the application:
    ```bash
    dotnet build
    dotnet run

@@ -1,0 +1,21 @@
+{
+    "snes": "snes",
+    "gbc": "gbc",
+    "gba": "gba",
+    "n64": "n64",
+    "ps1": "psx",
+    "ps2": "ps2",
+    "3ds": "3ds",
+    "psp": "psp",
+    "wii": "wii",
+    "wiiu": "wiiu",
+    "switch": "switch",
+    "gcn": "gc",
+    "nds": "nds",
+    "pc": "pc",
+    "playdate": "playdate",
+    "ps3": "ps3",
+    "ps4": "ps4",
+    "xbox": "xbox",
+    "xbox 360": "xbox360"
+} 

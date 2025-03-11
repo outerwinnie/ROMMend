@@ -55,9 +55,10 @@ public partial class RomViewModel : ViewModelBase
         }
     }
 
-    public void CheckIfDownloaded(string downloadDirectory)
+    public void CheckIfDownloaded(string downloadDirectory, PlatformFolders platformFolders)
     {
-        var filePath = Path.Combine(downloadDirectory, PlatformFsSlug.ToLower(), FsName);
+        var platformFolderName = platformFolders.GetFolderName(PlatformFsSlug);
+        var filePath = Path.Combine(downloadDirectory, platformFolderName, FsName);
         IsDownloaded = File.Exists(filePath);
     }
 }
