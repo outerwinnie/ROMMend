@@ -59,15 +59,20 @@
                          FontWeight="Bold"
                          HorizontalAlignment="Center"/>
 
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="0,20">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,0,0,10">
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Host:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Host}"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Host}" Margin="0,0,0,5"/>
+                    
+                    <CheckBox Grid.Row="1" Grid.Column="1" 
+                              Content="Use HTTPS"
+                              IsChecked="{Binding UseHttps}"
+                              Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Username:" VerticalAlignment="Center" Margin="0,10,10,0"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Username}" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Username:" VerticalAlignment="Center"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Username}" Margin="0,0,0,10"/>
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Password:" VerticalAlignment="Center" Margin="0,10,10,0"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Password}" PasswordChar="•" Margin="0,10,0,0"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Password:" VerticalAlignment="Center"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Password}" PasswordChar="•"/>
                 </Grid>
 
                 <TextBlock Text="{Binding StatusMessage}"

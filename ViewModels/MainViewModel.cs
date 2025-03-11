@@ -67,6 +67,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDownloading;
 
+    [ObservableProperty]
+    private bool _useHttps = true;
+
     partial void OnSelectedPlatformChanged(string? value)
     {
         FilterRoms();
@@ -130,6 +133,7 @@ public partial class MainViewModel : ViewModelBase
         Password = _settings.Get("password");
         Host = _settings.Get("host");
         DownloadDirectory = _settings.Get("download_directory");
+        UseHttps = bool.Parse(_settings.Get("use_https"));
     }
 
     [RelayCommand]
@@ -144,7 +148,7 @@ public partial class MainViewModel : ViewModelBase
         if (folder.Count > 0)
         {
             DownloadDirectory = folder[0].Path.LocalPath;
-            _settings.SaveSettings(Username, Password, Host, DownloadDirectory);
+            _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
         }
     }
 
@@ -170,12 +174,16 @@ public partial class MainViewModel : ViewModelBase
             IsLoading = true;
             StatusMessage = "Connecting to server...";
 
-            _apiService = new ApiService(Host, Username, Password);
+            var protocol = UseHttps ? "https" : "http";
+            var cleanHost = Host.Replace("http://", "").Replace("https://", "");
+            var fullHost = $"{protocol}://{cleanHost}";
+            
+            _apiService = new ApiService(fullHost, Username, Password);
             var (success, error) = await _apiService.LoginAsync();
 
             if (success)
             {
-                _settings.SaveSettings(Username, Password, Host, DownloadDirectory);
+                _settings.SaveSettings(Username, Password, Host, DownloadDirectory, UseHttps);
                 IsLoggedIn = true;
                 StatusMessage = "Connected successfully!";
                 await LoadRomsAsync();

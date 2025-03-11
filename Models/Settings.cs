@@ -19,6 +19,7 @@ public class Settings
         public string Password { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
         public string DownloadDirectory { get; set; } = string.Empty;
+        public bool UseHttps { get; set; } = true;
     }
 
     private SettingsData LoadSettings()
@@ -38,12 +39,13 @@ public class Settings
         return GetDefaultSettings();
     }
 
-    public void SaveSettings(string username, string password, string host, string downloadDirectory)
+    public void SaveSettings(string username, string password, string host, string downloadDirectory, bool useHttps)
     {
         _settings.Username = username;
         _settings.Password = password;
         _settings.Host = host;
         _settings.DownloadDirectory = downloadDirectory;
+        _settings.UseHttps = useHttps;
         
         var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(SettingsFile, json);
@@ -66,6 +68,7 @@ public class Settings
         "password" => _settings.Password,
         "host" => _settings.Host,
         "download_directory" => _settings.DownloadDirectory,
+        "use_https" => _settings.UseHttps.ToString(),
         _ => string.Empty
     };
 
