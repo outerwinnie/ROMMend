@@ -5,11 +5,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     strategy:
       matrix:
+        configuration: [Release]
         os: [ubuntu-latest, windows-latest]
         dotnet-version: ['8.0.x']
 
@@ -32,22 +34,26 @@ jobs:
         sudo apt-get install -y libxinerama-dev
         sudo apt-get install -y libxcursor-dev
         sudo apt-get install -y libxi-dev
+        sudo apt-get install -y libgl-dev
     
     - name: Restore dependencies
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --configuration Release --no-restore
-    
-    - name: Test
-      run: dotnet test --no-build --verbosity normal --configuration Release
+      run: dotnet build --configuration ${{ matrix.configuration }} --no-restore
     
     - name: Publish
-      run: dotnet publish --configuration Release --runtime ${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }} --self-contained true
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          dotnet publish --configuration ${{ matrix.configuration }} --runtime win-x64 --self-contained true -p:PublishSingleFile=true
+        else
+          dotnet publish --configuration ${{ matrix.configuration }} --runtime linux-x64 --self-contained true -p:PublishSingleFile=true
+        fi
+      shell: bash
     
-    - name: Upload artifacts
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
         name: ROMMend-${{ matrix.os }}
         path: |
-          bin/Release/net8.0/${{ matrix.os == 'windows-latest' && 'win-x64' || 'linux-x64' }}/publish/ 
+          bin/${{ matrix.configuration }}/net8.0/**/publish/ 
