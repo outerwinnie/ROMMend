@@ -36,8 +36,8 @@ jobs:
         
     - name: Build and Publish
       run: |
-        dotnet publish -c Release -r ${{ matrix.runtime }} \
-        -p:Version=${{ steps.version.outputs.version }} \
+        dotnet publish -c Release -r ${{ matrix.runtime }} `
+        -p:Version=${{ steps.version.outputs.version }} `
         --self-contained true
       
     - name: Package (Windows)
