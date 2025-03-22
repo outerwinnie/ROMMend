@@ -404,11 +404,9 @@ public partial class MainViewModel : ViewModelBase
                 DownloadStatus = update.status;
             });
 
-            var data = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, rom.Name, progress, _downloadCancellation.Token);
-            if (data != null)
+            var downloadedFilePath = await _apiService.DownloadRomAsync(rom.Id, rom.FsName, rom.Name, filePath, progress, _downloadCancellation.Token);
+            if (downloadedFilePath != null)
             {
-                await File.WriteAllBytesAsync(filePath, data, _downloadCancellation.Token);
-                
                 if (Path.GetExtension(filePath).ToLower() == ".zip")
                 {
                     try 

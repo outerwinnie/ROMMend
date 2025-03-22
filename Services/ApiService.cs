@@ -85,7 +85,7 @@ public class ApiService
         }
     }
 
-    public async Task<byte[]?> DownloadRomAsync(int id, string fsName, string romName, 
+    public async Task<string?> DownloadRomAsync(int id, string fsName, string romName, string destinationPath,
         IProgress<(int percentage, string status)>? progress = null, 
         CancellationToken cancellationToken = default)
     {
@@ -103,32 +103,42 @@ public class ApiService
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             var buffer = new byte[81920];
-            var ms = new MemoryStream();
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             var totalBytesRead = 0L;
             var startTime = DateTime.Now;
 
-            while (true)
+            // Create directory if it doesn't exist
+            var directory = Path.GetDirectoryName(destinationPath);
+            if (directory != null && !Directory.Exists(directory))
             {
-                var bytesRead = await stream.ReadAsync(buffer, cancellationToken);
-                if (bytesRead == 0) break;
+                Directory.CreateDirectory(directory);
+            }
 
-                await ms.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
-                totalBytesRead += bytesRead;
-
-                if (totalBytes > 0 && progress != null)
+            // Stream directly to file instead of loading into memory
+            using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
+            {
+                while (true)
                 {
-                    var percentage = (int)((totalBytesRead * 100) / totalBytes);
-                    var elapsedTime = DateTime.Now - startTime;
-                    var speed = totalBytesRead / (1024.0 * 1024.0 * elapsedTime.TotalSeconds);
-                    var downloadedMB = totalBytesRead / (1024.0 * 1024.0);
-                    var totalMB = totalBytes / (1024.0 * 1024.0);
-                    
-                    progress.Report((percentage, $"Downloading {romName}: {downloadedMB:F1} MB / {totalMB:F1} MB ({speed:F1} MB/s)"));
+                    var bytesRead = await stream.ReadAsync(buffer, cancellationToken);
+                    if (bytesRead == 0) break;
+
+                    await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    totalBytesRead += bytesRead;
+
+                    if (totalBytes > 0 && progress != null)
+                    {
+                        var percentage = (int)((totalBytesRead * 100) / totalBytes);
+                        var elapsedTime = DateTime.Now - startTime;
+                        var speed = totalBytesRead / (1024.0 * 1024.0 * elapsedTime.TotalSeconds);
+                        var downloadedMB = totalBytesRead / (1024.0 * 1024.0);
+                        var totalMB = totalBytes / (1024.0 * 1024.0);
+                        
+                        progress.Report((percentage, $"Downloading {romName}: {downloadedMB:F1} MB / {totalMB:F1} MB ({speed:F1} MB/s)"));
+                    }
                 }
             }
 
-            return ms.ToArray();
+            return destinationPath;
         }
         catch (OperationCanceledException)
         {
