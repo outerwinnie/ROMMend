@@ -13,11 +13,26 @@ namespace ROMMend.Services;
 
 public class ApiService
 {
+    private static readonly string LogFilePath = Path.Combine(Directory.GetCurrentDirectory(), "debug.txt");
+    private static void LogToFile(string message)
+    {
+        string logLine = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}";
+        try
+        {
+            File.AppendAllText(LogFilePath, logLine);
+        }
+        catch (Exception ex)
+        {
+            // Fallback: write to console if file logging fails
+            Console.WriteLine($"[LogToFile-Fallback] {logLine} (File error: {ex.Message})");
+        }
+    }
     private readonly HttpClient _httpClient;
     public string Host { get; }
 
     public ApiService(string host, string username, string password)
     {
+        LogToFile($"ApiService instantiated. Host={host}, Username={username}");
         Host = host;
         _httpClient = new HttpClient();
         var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
@@ -27,61 +42,121 @@ public class ApiService
 
     public async Task<(bool success, string error)> LoginAsync()
     {
+        string url = $"{Host}/api/login";
         try
         {
-            var response = await _httpClient.PostAsync($"{Host}/api/login", null);
+            LogToFile($"[ApiService] Attempting login: POST {url}");
+            var response = await _httpClient.PostAsync(url, null);
+            LogToFile($"[ApiService] Login response: StatusCode={(int)response.StatusCode} {response.StatusCode}");
             if (response.IsSuccessStatusCode)
             {
+                LogToFile("[ApiService] Login successful.");
                 return (true, string.Empty);
             }
-            
+            string respBody = await response.Content.ReadAsStringAsync();
+            LogToFile($"[ApiService] Login failed: Body={respBody}");
             return response.StatusCode switch
             {
                 System.Net.HttpStatusCode.Unauthorized => (false, "Invalid username or password"),
                 System.Net.HttpStatusCode.NotFound => (false, "Invalid host or API endpoint not found"),
-                _ => (false, $"Server error: {response.StatusCode}")
+                _ => (false, $"Server error: {response.StatusCode} - {respBody}")
             };
         }
         catch (HttpRequestException ex)
         {
+            LogToFile($"[ApiService] HttpRequestException: {ex.Message}");
             return (false, "Could not connect to server. Please check the host address and your internet connection.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            LogToFile($"[ApiService] Unexpected Exception: {ex}");
             return (false, "An unexpected error occurred while connecting to the server.");
         }
     }
 
+    public class PaginatedResponse<T>
+    {
+        public List<T>? Results { get; set; }
+        public List<T>? Items { get; set; } // fallback for alternate key
+        public int Count { get; set; } // total count if provided
+    }
+
     public async Task<List<Rom>> GetRomsAsync(IProgress<(int percentage, string status)>? progress = null)
     {
+        const int pageSize = 1000;
+        int offset = 0;
+        int total = -1;
+        List<Rom> allRoms = new List<Rom>();
+        bool more = true;
+
         try
         {
-            progress?.Report((0, "Fetching ROM list..."));
-            var response = await _httpClient.GetAsync($"{Host}/api/roms");
-            if (!response.IsSuccessStatusCode) return new List<Rom>();
-
-            var content = await response.Content.ReadAsStringAsync();
-            var roms = JsonSerializer.Deserialize<List<Rom>>(content) ?? new List<Rom>();
-
-            // Report progress for each ROM's details
-            if (roms.Count > 0 && progress != null)
+            while (more)
             {
-                for (int i = 0; i < roms.Count; i++)
+                string url = $"{Host}/api/roms?limit={pageSize}&offset={offset}";
+                LogToFile($"[ApiService] Fetching ROMs: GET {url}");
+                progress?.Report((allRoms.Count * 100 / Math.Max(total, 1), $"Fetching ROMs... {allRoms.Count} loaded"));
+                var response = await _httpClient.GetAsync(url);
+                LogToFile($"[ApiService] GetRoms response: StatusCode={(int)response.StatusCode} {response.StatusCode}");
+                if (!response.IsSuccessStatusCode)
                 {
-                    var rom = roms[i];
-                    var percentage = (int)((i + 1) * 100.0 / roms.Count);
-                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{roms.Count})"));
-                    
-                    // Add a small delay to show progress
-                    await Task.Delay(50);
+                    string respBody = await response.Content.ReadAsStringAsync();
+                    LogToFile($"[ApiService] GetRoms failed: Body={respBody}");
+                    break;
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                LogToFile($"[ApiService] GetRoms success: Body length={content.Length}");
+
+                try
+                {
+                    var paged = JsonSerializer.Deserialize<PaginatedResponse<Rom>>(content, new JsonSerializerOptions {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    List<Rom>? roms = paged?.Results ?? paged?.Items;
+                    if (roms == null)
+                    {
+                        LogToFile($"[ApiService] Paginated response did not contain 'results' or 'items'. Logging first 1000 chars: {content.Substring(0, Math.Min(1000, content.Length))}");
+                        break;
+                    }
+                    if (total < 0 && paged != null)
+                        total = paged.Count > 0 ? paged.Count : Math.Max(roms.Count, 1);
+
+                    allRoms.AddRange(roms);
+                    LogToFile($"[ApiService] Page loaded: {roms.Count} ROMs, total so far: {allRoms.Count}");
+                    if (roms.Count < pageSize)
+                    {
+                        more = false;
+                    }
+                    else
+                    {
+                        offset += pageSize;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"[ApiService] Deserialization error: {ex}\nFirst 1000 chars: {content.Substring(0, Math.Min(1000, content.Length))}");
+                    break;
                 }
             }
 
-            return roms;
+            // Report progress for each ROM's details
+            if (allRoms.Count > 0 && progress != null)
+            {
+                for (int i = 0; i < allRoms.Count; i++)
+                {
+                    var rom = allRoms[i];
+                    var percentage = (int)((i + 1) * 100.0 / allRoms.Count);
+                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{allRoms.Count})"));
+                    await Task.Delay(50);
+                }
+            }
+            return allRoms;
         }
-        catch
+        catch (Exception ex)
         {
-            return new List<Rom>();
+            LogToFile($"[ApiService] Exception in GetRomsAsync: {ex}");
+            return allRoms;
         }
     }
 

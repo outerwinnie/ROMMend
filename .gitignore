@@ -72,3 +72,4 @@ appsettings.Local.json
 *.bak
 *.tmp
 platform_folders.json
+debug.txt
