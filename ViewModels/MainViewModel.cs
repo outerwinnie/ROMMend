@@ -105,7 +105,7 @@ public partial class MainViewModel : ViewModelBase
         var romsToShow = Roms.AsEnumerable();
 
         // Filter by platform
-        if (!string.IsNullOrEmpty(SelectedPlatform) && SelectedPlatform != "All Platforms")
+        if (!string.IsNullOrEmpty(SelectedPlatform) && SelectedPlatform != "All")
         {
             romsToShow = romsToShow.Where(r => r.PlatformFsSlug == SelectedPlatform);
         }
@@ -131,7 +131,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void SortPlatforms()
     {
-        var sorted = Platforms.OrderBy(p => p == "All Platforms" ? "" : p).ToList();
+        var sorted = Platforms.OrderBy(p => p == "All" ? "" : p).ToList();
         Platforms.Clear();
         foreach (var platform in sorted)
         {
@@ -227,11 +227,11 @@ public partial class MainViewModel : ViewModelBase
                 return;
             }
 
-            IsLoading = true;
-
             var protocol = UseHttps ? "https" : "http";
             var cleanHost = Host.Replace("http://", "").Replace("https://", "");
             var fullHost = $"{protocol}://{cleanHost}";
+
+            IsLoading = true;
             
             _apiService = new ApiService(fullHost, Username, Password);
             var (success, error) = await _apiService.LoginAsync();
@@ -298,23 +298,17 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            DownloadProgress = 0;
+            StatusMessage = "Loading your ROMM library...";
             DownloadStatus = string.Empty;
-            StatusMessage = string.Empty;
+            DownloadProgress = 0;
             Roms.Clear();
             FilteredRoms.Clear();
             Platforms.Clear();
 
-            var progress = new Progress<(int percentage, string status)>(update =>
-            {
-                DownloadProgress = update.percentage;
-                DownloadStatus = update.status;
-            });
-
-            var roms = await _apiService.GetRomsAsync(progress);
+            var roms = await _apiService.GetRomsAsync();
             
             // Add "All Platforms" option
-            Platforms.Add("All Platforms");
+            Platforms.Add("All");
             
             // Get unique platforms
             var uniquePlatforms = roms.Select(r => r.PlatformFsSlug).Distinct();
@@ -324,23 +318,19 @@ public partial class MainViewModel : ViewModelBase
             }
             
             SortPlatforms();
-            SelectedPlatform = "All Platforms";
+            SelectedPlatform = "All";
 
-            // Load cover images and check downloads with progress
-            if (roms.Count > 0)
+            // Unified progress: process ROMs (details + covers)
+            int total = roms.Count;
+            for (int i = 0; i < total; i++)
             {
-                for (int i = 0; i < roms.Count; i++)
-                {
-                    var rom = roms[i];
-                    var percentage = (int)((i + 1) * 100.0 / roms.Count);
-                    DownloadProgress = percentage;
-                    DownloadStatus = $"Loading ROM info ({i + 1}/{roms.Count})";
-
-                    var romViewModel = new RomViewModel(rom, _cacheService);
-                    await romViewModel.LoadCoverImageAsync(_apiService);
-                    romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
-                    Roms.Add(romViewModel);
-                }
+                var rom = roms[i];
+                var romViewModel = new RomViewModel(rom, _cacheService);
+                await romViewModel.LoadCoverImageAsync(_apiService);
+                romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
+                Roms.Add(romViewModel);
+                DownloadProgress = (int)((i + 1) * 100.0 / total);
+                if ((i + 1) % 50 == 0) await Task.Delay(5); // Artificial delay every 50 ROMs
             }
 
             FilterRoms();
