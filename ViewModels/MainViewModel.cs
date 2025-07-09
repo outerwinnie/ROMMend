@@ -227,11 +227,11 @@ public partial class MainViewModel : ViewModelBase
                 return;
             }
 
-            IsLoading = true;
-
             var protocol = UseHttps ? "https" : "http";
             var cleanHost = Host.Replace("http://", "").Replace("https://", "");
             var fullHost = $"{protocol}://{cleanHost}";
+
+            IsLoading = true;
             
             _apiService = new ApiService(fullHost, Username, Password);
             var (success, error) = await _apiService.LoginAsync();
