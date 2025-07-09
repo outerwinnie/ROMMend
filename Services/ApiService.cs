@@ -14,7 +14,7 @@ namespace ROMMend.Services;
 public class ApiService
 {
     private static readonly string LogFilePath = Path.Combine(Directory.GetCurrentDirectory(), "debug.txt");
-    private static void LogToFile(string message)
+    internal static void LogToFile(string message)
     {
         string logLine = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}";
         try
@@ -95,7 +95,7 @@ public class ApiService
             {
                 string url = $"{Host}/api/roms?limit={pageSize}&offset={offset}";
                 LogToFile($"[ApiService] Fetching ROMs: GET {url}");
-                progress?.Report((allRoms.Count * 100 / Math.Max(total, 1), $"Fetching ROMs... {allRoms.Count} loaded"));
+
                 var response = await _httpClient.GetAsync(url);
                 LogToFile($"[ApiService] GetRoms response: StatusCode={(int)response.StatusCode} {response.StatusCode}");
                 if (!response.IsSuccessStatusCode)
@@ -140,17 +140,7 @@ public class ApiService
                 }
             }
 
-            // Report progress for each ROM's details
-            if (allRoms.Count > 0 && progress != null)
-            {
-                for (int i = 0; i < allRoms.Count; i++)
-                {
-                    var rom = allRoms[i];
-                    var percentage = (int)((i + 1) * 100.0 / allRoms.Count);
-                    progress.Report((percentage, $"Loading ROM details ({i + 1}/{allRoms.Count})"));
-                    await Task.Delay(50);
-                }
-            }
+
             return allRoms;
         }
         catch (Exception ex)

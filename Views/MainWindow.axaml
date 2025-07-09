@@ -221,10 +221,17 @@
                           Foreground="White"
                           IsVisible="{Binding DownloadStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                           Margin="0,0,0,10"/>
-                <ProgressBar Value="{Binding DownloadProgress}"
-                            Width="200"
-                            Height="4"
-                            IsVisible="{Binding DownloadStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                <!-- Fallback: If ProgressRing is not available, use a highly rounded ProgressBar -->
+                <Panel IsVisible="{Binding IsLoggedIn}">
+                    <ProgressBar Value="{Binding DownloadProgress}"
+                                 Width="240"
+                                 Height="16"
+                                 CornerRadius="8"
+                                 Foreground="#2a82da"
+                                 Background="#333333"
+                                 IsVisible="{Binding IsLoading, Mode=OneWay}"/>
+                </Panel>
                 <Button Content="Cancel"
                         Command="{Binding CancelDownloadCommand}"
                         Background="#d32f2f"

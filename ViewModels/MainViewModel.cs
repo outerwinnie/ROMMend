@@ -298,20 +298,14 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             IsLoading = true;
-            DownloadProgress = 0;
+            StatusMessage = "Loading your ROMM library...";
             DownloadStatus = string.Empty;
-            StatusMessage = string.Empty;
+            DownloadProgress = 0;
             Roms.Clear();
             FilteredRoms.Clear();
             Platforms.Clear();
 
-            var progress = new Progress<(int percentage, string status)>(update =>
-            {
-                DownloadProgress = update.percentage;
-                DownloadStatus = update.status;
-            });
-
-            var roms = await _apiService.GetRomsAsync(progress);
+            var roms = await _apiService.GetRomsAsync();
             
             // Add "All Platforms" option
             Platforms.Add("All Platforms");
@@ -326,21 +320,16 @@ public partial class MainViewModel : ViewModelBase
             SortPlatforms();
             SelectedPlatform = "All Platforms";
 
-            // Load cover images and check downloads with progress
-            if (roms.Count > 0)
+            // Unified progress: process ROMs (details + covers)
+            int total = roms.Count;
+            for (int i = 0; i < total; i++)
             {
-                for (int i = 0; i < roms.Count; i++)
-                {
-                    var rom = roms[i];
-                    var percentage = (int)((i + 1) * 100.0 / roms.Count);
-                    DownloadProgress = percentage;
-                    DownloadStatus = $"Loading ROM info ({i + 1}/{roms.Count})";
-
-                    var romViewModel = new RomViewModel(rom, _cacheService);
-                    await romViewModel.LoadCoverImageAsync(_apiService);
-                    romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
-                    Roms.Add(romViewModel);
-                }
+                var rom = roms[i];
+                var romViewModel = new RomViewModel(rom, _cacheService);
+                await romViewModel.LoadCoverImageAsync(_apiService);
+                romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
+                Roms.Add(romViewModel);
+                DownloadProgress = (int)((i + 1) * 100.0 / total);
             }
 
             FilterRoms();
