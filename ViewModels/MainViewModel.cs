@@ -105,7 +105,7 @@ public partial class MainViewModel : ViewModelBase
         var romsToShow = Roms.AsEnumerable();
 
         // Filter by platform
-        if (!string.IsNullOrEmpty(SelectedPlatform) && SelectedPlatform != "All Platforms")
+        if (!string.IsNullOrEmpty(SelectedPlatform) && SelectedPlatform != "All")
         {
             romsToShow = romsToShow.Where(r => r.PlatformFsSlug == SelectedPlatform);
         }
@@ -131,7 +131,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void SortPlatforms()
     {
-        var sorted = Platforms.OrderBy(p => p == "All Platforms" ? "" : p).ToList();
+        var sorted = Platforms.OrderBy(p => p == "All" ? "" : p).ToList();
         Platforms.Clear();
         foreach (var platform in sorted)
         {
@@ -308,7 +308,7 @@ public partial class MainViewModel : ViewModelBase
             var roms = await _apiService.GetRomsAsync();
             
             // Add "All Platforms" option
-            Platforms.Add("All Platforms");
+            Platforms.Add("All");
             
             // Get unique platforms
             var uniquePlatforms = roms.Select(r => r.PlatformFsSlug).Distinct();
@@ -318,7 +318,7 @@ public partial class MainViewModel : ViewModelBase
             }
             
             SortPlatforms();
-            SelectedPlatform = "All Platforms";
+            SelectedPlatform = "All";
 
             // Unified progress: process ROMs (details + covers)
             int total = roms.Count;
@@ -330,6 +330,7 @@ public partial class MainViewModel : ViewModelBase
                 romViewModel.CheckIfDownloaded(DownloadDirectory, _platformFolders);
                 Roms.Add(romViewModel);
                 DownloadProgress = (int)((i + 1) * 100.0 / total);
+                if ((i + 1) % 50 == 0) await Task.Delay(5); // Artificial delay every 50 ROMs
             }
 
             FilterRoms();
